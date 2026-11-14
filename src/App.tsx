@@ -1,0 +1,306 @@
+import React, { useState, useEffect } from 'react';
+import { Header } from './components/Header';
+import { Sidebar, NavTab } from './components/Sidebar';
+import { OverviewStats } from './components/OverviewStats';
+import { ServiceGrid } from './components/ServiceGrid';
+import { IncidentTable } from './components/IncidentTable';
+import { IncidentDetailModal } from './components/IncidentDetailModal';
+import { AiInvestigationView } from './components/AiInvestigationView';
+import { RecoveryView } from './components/RecoveryView';
+import { ReportsView } from './components/ReportsView';
+import {
+  getServices,
+  getIncidents,
+  simulateScenario,
+  resetAllSimulations,
+  approveRemediation,
+  executeRecoveryProgress,
+} from './services/incidentService';
+import { Incident, ServiceHealth } from './types';
+import { Bell, CheckCircle2, ShieldAlert, Sparkles, X } from 'lucide-react';
+
+export function App() {
+  const [services, setServices] = useState<ServiceHealth[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [currentTab, setCurrentTab] = useState<NavTab>('overview');
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceHealth | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'alert' | 'success' | 'info' } | null>(null);
+
+  // Load initial data
+  useEffect(() => {
+    setServices(getServices());
+    setIncidents(getIncidents());
+  }, []);
+
+  const showToast = (title: string, desc: string, type: 'alert' | 'success' | 'info' = 'info') => {
+    setToastMessage({ title, desc, type });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+  };
+
+  const handleSimulateScenario = (scenarioId?: string) => {
+    const { incident, service } = simulateScenario(scenarioId);
+    setServices(getServices());
+    setIncidents(getIncidents());
+    setSelectedIncident(incident);
+    showToast(
+      `🚨 New Incident Ingested: ${incident.id}`,
+      `Chaos injected into ${service.name}. AI Commander has generated root cause hypothesis.`,
+      'alert'
+    );
+  };
+
+  const handleResetAll = () => {
+    resetAllSimulations();
+    setServices(getServices());
+    setIncidents(getIncidents());
+    setSelectedIncident(null);
+    setSelectedService(null);
+    showToast(
+      'System State Restored',
+      'All 12 microservices returned to 100% operational baseline.',
+      'success'
+    );
+  };
+
+  const handleApproveRemediation = (incidentId: string) => {
+    const updated = approveRemediation(incidentId);
+    if (updated) {
+      setIncidents(getIncidents());
+      setServices(getServices());
+      setSelectedIncident(updated);
+      showToast(
+        'Remediation Authorized',
+        `Human on-call safety gate approved execution for ${incidentId}.`,
+        'success'
+      );
+    }
+  };
+
+  const handleCompleteRecovery = (incidentId: string) => {
+    const updated = executeRecoveryProgress(incidentId);
+    if (updated) {
+      setIncidents(getIncidents());
+      setServices(getServices());
+      setSelectedIncident(updated);
+      showToast(
+        'Incident Resolved',
+        `${incidentId} telemetry stabilized and verified by automated canary probes.`,
+        'success'
+      );
+    }
+  };
+
+  const handleSelectService = (svc: ServiceHealth) => {
+    setSelectedService(svc);
+    // Find active incident for this service if any
+    const relatedIncident = incidents.find(
+      (i) => i.affectedServiceId === svc.id && i.status !== 'RESOLVED'
+    );
+    if (relatedIncident) {
+      setSelectedIncident(relatedIncident);
+    }
+  };
+
+  const activeIncidents = incidents.filter((i) => i.status !== 'RESOLVED');
+  const criticalIncidents = activeIncidents.filter((i) => i.severity === 'CRITICAL');
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-rose-500/30 selection:text-rose-200">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-start space-x-3 p-4 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl max-w-md animate-in slide-in-from-bottom-5 duration-300">
+          <div className="p-2 rounded-xl shrink-0">
+            {toastMessage.type === 'alert' ? (
+              <ShieldAlert className="w-5 h-5 text-red-400" />
+            ) : toastMessage.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            ) : (
+              <Sparkles className="w-5 h-5 text-purple-400" />
+            )}
+          </div>
+          <div className="space-y-0.5 flex-1">
+            <h4 className="text-xs font-bold text-slate-100">{toastMessage.title}</h4>
+            <p className="text-xs text-slate-400 leading-snug">{toastMessage.desc}</p>
+          </div>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Global Top Header */}
+      <Header
+        incidents={incidents}
+        services={services}
+        onSimulateScenario={handleSimulateScenario}
+        onResetAll={handleResetAll}
+      />
+
+      {/* Main Layout Body */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <Sidebar
+          currentTab={currentTab}
+          onSelectTab={setCurrentTab}
+          activeIncidentCount={activeIncidents.length}
+          criticalIncidentCount={criticalIncidents.length}
+          servicesCount={services.length}
+        />
+
+        {/* View Content Area */}
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
+          {/* TAB 1: OVERVIEW */}
+          {currentTab === 'overview' && (
+            <div className="space-y-8 animate-in fade-in duration-200">
+              {/* Overview Stats Cards */}
+              <OverviewStats services={services} incidents={incidents} />
+
+              {/* Active Incidents Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-100">Live Incident Stream</h3>
+                    <p className="text-xs text-slate-400">
+                      Real-time telemetry anomalies triaged by Team Rocket AI Agent.
+                    </p>
+                  </div>
+                  {activeIncidents.length > 0 && (
+                    <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-rose-950/80 text-rose-300 border border-rose-800">
+                      {activeIncidents.length} Unresolved Incident{activeIncidents.length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+
+                <IncidentTable
+                  incidents={incidents}
+                  onSelectIncident={(inc) => setSelectedIncident(inc)}
+                  selectedIncidentId={selectedIncident?.id}
+                />
+              </div>
+
+              {/* 12-Service Health Cards */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-100">
+                      E-Commerce Application Services (12 Microservices)
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Live cluster health, latency (P99), error rates, and CPU utilization.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setCurrentTab('services')}
+                    className="text-xs font-semibold text-rose-400 hover:text-rose-300 cursor-pointer"
+                  >
+                    View All Services &rarr;
+                  </button>
+                </div>
+
+                <ServiceGrid
+                  services={services}
+                  onSelectService={handleSelectService}
+                  selectedServiceId={selectedService?.id}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: INCIDENTS */}
+          {currentTab === 'incidents' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-100">Active & Historical Incidents</h2>
+                  <p className="text-xs text-slate-400">
+                    Search and filter incidents across all 12 microservices.
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleSimulateScenario()}
+                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950 transition cursor-pointer"
+                >
+                  + Simulate New Incident
+                </button>
+              </div>
+
+              <IncidentTable
+                incidents={incidents}
+                onSelectIncident={(inc) => setSelectedIncident(inc)}
+                selectedIncidentId={selectedIncident?.id}
+              />
+            </div>
+          )}
+
+          {/* TAB 3: SERVICES */}
+          {currentTab === 'services' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div>
+                <h2 className="text-xl font-bold text-slate-100">
+                  Application Architecture (12 Monitored Microservices)
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Comprehensive telemetry, pod counts, upstream dependencies, and operational health.
+                </p>
+              </div>
+
+              <ServiceGrid
+                services={services}
+                onSelectService={handleSelectService}
+                selectedServiceId={selectedService?.id}
+              />
+            </div>
+          )}
+
+          {/* TAB 4: AI INVESTIGATION */}
+          {currentTab === 'investigation' && (
+            <div className="animate-in fade-in duration-200">
+              <AiInvestigationView
+                incidents={incidents}
+                services={services}
+                onSelectIncident={(inc) => setSelectedIncident(inc)}
+              />
+            </div>
+          )}
+
+          {/* TAB 5: RECOVERY */}
+          {currentTab === 'recovery' && (
+            <div className="animate-in fade-in duration-200">
+              <RecoveryView
+                incidents={incidents}
+                onSelectIncident={(inc) => setSelectedIncident(inc)}
+                onApproveRemediation={handleApproveRemediation}
+                onCompleteRecovery={handleCompleteRecovery}
+              />
+            </div>
+          )}
+
+          {/* TAB 6: REPORTS */}
+          {currentTab === 'reports' && (
+            <div className="animate-in fade-in duration-200">
+              <ReportsView incidents={incidents} />
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Detailed Incident Modal */}
+      {selectedIncident && (
+        <IncidentDetailModal
+          incident={selectedIncident}
+          onClose={() => setSelectedIncident(null)}
+          onApproveRemediation={handleApproveRemediation}
+          onCompleteRecovery={handleCompleteRecovery}
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;
