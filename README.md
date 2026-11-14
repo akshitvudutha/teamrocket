@@ -1,9 +1,9 @@
-# 🚀 Team Rocket — AI On-Call Incident Response Platform
+# 👁️ TARSIER — Autonomous AI Incident Response Platform
 
-An autonomous, prompt-injection-resistant on-call incident response platform with human-in-the-loop safety controls. Built for SRE and DevOps engineers handling high-concurrency cloud microservices.
+An autonomous, prompt-injection-resistant on-call incident response platform with human-in-the-loop safety controls and hands-free voice intelligence. Built for SRE and DevOps engineers handling high-concurrency cloud microservices.
 
+**Live Public Dashboard**: [https://teamrocket-nu.vercel.app/](https://teamrocket-nu.vercel.app/)  
 **GitHub Repository**: [https://github.com/akshitvudutha/teamrocket](https://github.com/akshitvudutha/teamrocket)  
-**Live Public Dashboard**: [https://teamrocket-nu.vercel.app/](https://teamrocket-nu.vercel.app/)
 
 ---
 
@@ -15,7 +15,7 @@ Modern cloud applications consist of dozens of distributed microservices. When i
 - Hostile payloads in logs or tool outputs can manipulate naive AI systems (prompt injection attacks).
 - Remediation mistakes can cause destructive data loss or violate organizational change-freeze policies.
 
-**Team Rocket's Objective**:
+**TARSIER's Objective**:
 Build an autonomous incident commander agent that ingests raw telemetry, normalizes messy logs, shields against prompt injection, runs evidence-based causal reasoning using local LLMs (Ollama `qwen3.5:4b` / `qwen2.5:7b`), enforces deterministic (non-LLM) safety guardrails and change freezes, and coordinates verification without executing arbitrary shell scripts.
 
 ---
@@ -28,12 +28,12 @@ The system is decoupled into three primary layers:
 +---------------------------------------------------------------------------------------+
 |                                    REACT FRONTEND                                     |
 |                       (Port 5173 - React 19 + Tailwind CSS v4)                        |
-|   • Overview Cards  • 12-Service Health Grid  • Incident Feed  • RCA Detail Panel     |
+|   • Notch Capsule Nav  • 12-Service Health Grid  • Incident Stream  • TARSIER Voice   |
 +-------------------------------------------+-------------------------------------------+
                                             │ REST API
                                             ▼
 +---------------------------------------------------------------------------------------+
-|                                 TEAM ROCKET BACKEND                                   |
+|                                   TARSIER BACKEND                                     |
 |                          (Port 5000 - Node.js + Express + TS)                         |
 |                                                                                       |
 |  [Evidence Normalization]               [Deterministic Safety Engine - Non-LLM]       |
@@ -67,11 +67,11 @@ The system is decoupled into three primary layers:
 
 ---
 
-## 🎙️ AI Voice Assistant & Hands-Free Incident Response
+## 🎙️ TARSIER Voice Assistant & Hands-Free Incident Response
 
-Team Rocket features an on-call AI Voice Assistant designed for emergency operations:
+TARSIER features an on-call AI Voice Assistant designed for emergency operations:
 
-1. **Microphone Access**: Click the **Voice Assistant** button in the top navigation or bottom-right corner.
+1. **Microphone Access**: Click the **TARSIER Voice** button in the floating navigation or press `⌘K` / `Ctrl+K`.
 2. **Real-Time Speech-to-Text**: Captures and previews spoken commands before executing them.
 3. **Audio Playback**: Reads synthesized SRE findings aloud using browser `SpeechSynthesis`.
 4. **Supported Voice Commands**:
@@ -89,7 +89,7 @@ Team Rocket features an on-call AI Voice Assistant designed for emergency operat
 
 ## 👥 Teammate Onboarding Guide (Beginner-Friendly)
 
-Welcome to Team Rocket! Here is everything you need to join and contribute to the project.
+Welcome to TARSIER! Here is everything you need to join and contribute to the project.
 
 ### 1. Prerequisites
 - **Git for Windows**: [Download and install Git](https://git-scm.com/download/win) (click Next with default options).
@@ -199,7 +199,7 @@ npm run dev
 npm run dev
 ```
 
-**Terminal 3 — Run Backend Test Suite (25 tests):**
+**Terminal 3 — Run Backend Test Suite (27 tests):**
 ```powershell
 cd backend
 npm test
@@ -213,18 +213,17 @@ Open your browser at: **[http://localhost:5173](http://localhost:5173)**
 
 - ✅ **Phase 1: Backend Foundation & Ollama Integration** — Complete (6/6 tests passing)
 - ✅ **Phase 2: Evidence Collection & Log Normalization** — Complete (12/12 tests passing)
-- ✅ **Voice Assistant: Real-Time Audio & SRE Voice Control** — Complete (7/7 tests passing)
-- ⏳ **Phase 3: AI Investigation & Multi-Root-Cause Analysis** — Next
-- ⏳ **Phase 4: Deterministic Safety Engine & Change Freeze** — Queued
-- ⏳ **Phase 5: Official Organizer API Adapter** — Awaiting Organizer Documentation
-- ⏳ **Phase 6: Post-Remediation Verification & Postmortem** — Queued
-- ⏳ **Phase 7: Dashboard Live Integration & End-to-End Testing** — Queued
+- ✅ **TARSIER Voice: Real-Time Audio & SRE Voice Control** — Complete (9/9 tests passing)
+- ✅ **Notch Minimalist UI Redesign & Light/Dark Theme** — Complete & Verified Live
+- ✅ **Official Rebrand to TARSIER** — Complete
+- ⏳ **Phase 3: Deep Multi-Root-Cause Graph Analysis** — Ongoing
+- ⏳ **Phase 4: Dynamic Change Freeze & Automated Rollbacks** — Ready for Evaluation
 
 ---
 
-## 👥 Team Rocket Responsibilities
+## 👥 Engineering Responsibilities
 
-| Teammate | Focus Area | Detailed Scope |
+| Engineer | Focus Area | Detailed Scope |
 | :--- | :--- | :--- |
 | **AKSHIT** | **Backend Core & AI** | Backend architecture, Ollama client, log normalization, evidence pipeline, and automated backend test suites. |
 | **VIKRANT** | **Frontend Experience** | React dashboard, responsive layout, SRE operational views, API wiring, and frontend testing. |

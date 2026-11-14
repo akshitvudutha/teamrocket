@@ -21,8 +21,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ incidents }) => {
 
   const handleExportReport = () => {
     const reportData = {
-      team: 'Team Rocket',
-      project: 'AI Autonomous On-Call Incident Response Platform',
+      team: 'TARSIER',
+      project: 'TARSIER Autonomous AI Incident Response Platform',
       timestamp: new Date().toISOString(),
       summaryStats: {
         totalIncidentsTracked: incidents.length,
@@ -48,7 +48,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ incidents }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `team-rocket-incident-report-${Date.now()}.json`;
+    a.download = `tarsier-incident-report-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
 

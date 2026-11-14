@@ -186,7 +186,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
 
   const handlePreviewVoice = () => {
     setIsPreviewingVoice(true);
-    voiceService.previewVoice('Team Rocket autonomous on-call agent standing by.', () => {
+    voiceService.previewVoice('TARSIER autonomous on-call agent standing by.', () => {
       setIsPreviewingVoice(false);
     });
   };
@@ -212,7 +212,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
             <span className="text-xs font-mono uppercase tracking-wider text-[var(--text-muted)]">
-              Team Rocket Voice Copilot
+              TARSIER Voice Copilot
             </span>
           </div>
 
@@ -227,7 +227,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
             <button
               onClick={onClose}
               className="notch-btn-ghost p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              title="Close Voice Assistant"
+              title="Close TARSIER Voice"
             >
               <X className="w-4 h-4" />
             </button>

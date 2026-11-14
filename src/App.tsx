@@ -62,7 +62,7 @@ function DashboardContent() {
     setSelectedIncident(incident);
     showToast(
       `🚨 New Incident Ingested: ${incident.id}`,
-      `Chaos injected into ${service.name}. AI Commander has generated root cause hypothesis.`,
+      `Chaos injected into ${service.name}. TARSIER AI has generated root cause hypothesis.`,
       'alert'
     );
   };
@@ -231,7 +231,7 @@ function DashboardContent() {
                   Active & Historical Incidents
                 </h2>
                 <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
-                  Continuous telemetry anomalies triaged by Team Rocket AI Agent.
+                  Continuous telemetry anomalies triaged by TARSIER AI.
                 </p>
               </div>
 
@@ -305,7 +305,7 @@ function DashboardContent() {
         type="button"
         onClick={() => setIsVoiceModalOpen(true)}
         className="fixed bottom-6 right-6 z-40 notch-pill px-4 py-2 flex items-center space-x-2 text-xs font-medium cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-xl group border border-[var(--border-medium)]"
-        title="Open Team Rocket Voice Assistant (⌘K)"
+        title="Open TARSIER Voice (⌘K)"
       >
         <div className="relative">
           <Mic className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
@@ -314,7 +314,7 @@ function DashboardContent() {
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
           </span>
         </div>
-        <span className="text-[var(--text-primary)] font-medium">Voice AI</span>
+        <span className="text-[var(--text-primary)] font-medium">TARSIER Voice</span>
         <span className="text-[10px] font-mono px-1 rounded bg-[var(--tag-bg)] text-[var(--text-muted)]">
           ⌘K
         </span>

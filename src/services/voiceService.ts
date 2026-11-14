@@ -156,7 +156,7 @@ export class VoiceService {
   }
 
   previewVoice(
-    sampleText: string = 'Hello SRE commander. Team Rocket telemetry is operational.',
+    sampleText: string = 'Hello SRE commander. TARSIER telemetry is operational.',
     onEnd?: () => void
   ): void {
     this.speakText(sampleText, onEnd);
@@ -319,7 +319,7 @@ export class VoiceService {
         spokenResponse:
           'Safety policy warning: Voice commands cannot execute remediation, mutate infrastructure, or override safety guardrails. Please review and authorize the fix in the Safety Gate.',
         detailedFindings:
-          'MUTATION BLOCKED: In accordance with Team Rocket Safety Policy, all infrastructure mutations require human visual verification and manual approval via the Safety Gate.',
+          'MUTATION BLOCKED: In accordance with TARSIER Safety Policy, all infrastructure mutations require human visual verification and manual approval via the Safety Gate.',
         uiAction: {
           type: 'SHOW_MODAL_TAB',
           payload: { tab: 'remediation' },

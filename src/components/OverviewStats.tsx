@@ -75,7 +75,7 @@ export const OverviewStats: React.FC<OverviewStatsProps> = ({
 
         {/* Short, Understated Subtitle */}
         <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-lg mx-auto leading-relaxed">
-          Autonomous SRE copilot. Ingests distributed telemetry, synthesizes root cause hypotheses with Ollama, and executes verified runbooks.
+          Autonomous SRE copilot powered by TARSIER AI. Ingests distributed telemetry, synthesizes root cause hypotheses with Ollama, and executes verified runbooks.
         </p>
 
         {/* Primary Action Button Bar */}
@@ -105,7 +105,7 @@ export const OverviewStats: React.FC<OverviewStatsProps> = ({
             className="notch-btn-ghost px-5 py-2.5 text-xs sm:text-sm font-medium"
           >
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Voice Assistant (⌘K)</span>
+            <span>TARSIER Voice (⌘K)</span>
           </button>
         </div>
       </section>
@@ -229,7 +229,7 @@ export const OverviewStats: React.FC<OverviewStatsProps> = ({
                 All production telemetry is stable
               </h4>
               <p className="text-xs text-[var(--text-muted)]">
-                Continuous log normalizer and anomaly detectors active across all 12 services.
+                Continuous log normalizer and TARSIER anomaly watchers active across all 12 services.
               </p>
             </div>
           </div>

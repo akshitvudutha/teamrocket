@@ -228,9 +228,9 @@ const samplePaymentLogs: LogEntry[] = [
     id: 'log-106',
     timestamp: '12:30:11.312',
     level: 'INFO',
-    service: 'Team Rocket Agent',
+    service: 'TARSIER Agent',
     message: 'Autonomous Incident Commander: Root cause model generated high-confidence diagnosis (96%). Awaiting SRE safety sign-off.',
-    traceId: 'tr-rocket-agent-01',
+    traceId: 'tarsier-agent-01',
   },
 ];
 
@@ -261,7 +261,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
       blastRadiusServices: ['Payment Gateway', 'Order Processing Engine', 'Shopping Cart Service', 'API Gateway'],
       estimatedUserImpact: 'Est. 1,420 checkout attempts failed; approx $38,400 revenue delayed over past 15 minutes.',
       aiConfidence: 96,
-      modelEngine: 'Team Rocket Autonomous Commander v3.4',
+      modelEngine: 'TARSIER Autonomous Commander v3.4',
       investigationTimeline: [
         { time: '12:24:18', note: 'Anomaly detected: P99 latency exceeded 1500ms threshold.' },
         { time: '12:25:05', note: 'AI agent correlated 18 error traces matching HikariCP lock wait timeouts.' },
@@ -275,7 +275,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
       strategy: 'Scale Payment Gateway pod count to 16, dynamically adjust HikariCP pool max to 120, and enable temporary read-replica routing for transaction status queries.',
       riskLevel: 'LOW',
       automationEligible: true,
-      commandSnippet: `# Team Rocket AI Remediation Script:
+      commandSnippet: `# TARSIER AI Remediation Script:
 kubectl scale deployment payment-gateway --replicas=16 -n commerce
 kubectl set env deployment/payment-gateway HIKARI_MAX_POOL_SIZE=120 -n commerce
 consul kv put config/payment/enable_read_replica_fallback true
@@ -330,7 +330,7 @@ redis-cli -h redis-payment-queue.internal FLUSHDB ASYNC`,
       blastRadiusServices: ['Search & Elasticsearch', 'Product Catalog'],
       estimatedUserImpact: 'Product search queries experiencing 380ms latency (up from 45ms); zero hard query drops.',
       aiConfidence: 91,
-      modelEngine: 'Team Rocket Autonomous Commander v3.4',
+      modelEngine: 'TARSIER Autonomous Commander v3.4',
       investigationTimeline: [
         { time: '12:18:42', note: 'Cluster health yellow alert triggered.' },
         { time: '12:20:10', note: 'Identified shard reallocation timeout on node es-data-03.' },
@@ -418,7 +418,7 @@ kubectl patch cronjob catalog-reindex-sync -p '{"spec":{"suspend":true}}'`,
       blastRadiusServices: ['Auth & IAM Service', 'Shopping Cart Service'],
       estimatedUserImpact: 'Appx. 3,200 users prompted to re-authenticate; zero permanent state loss.',
       aiConfidence: 98,
-      modelEngine: 'Team Rocket Autonomous Commander v3.4',
+      modelEngine: 'TARSIER Autonomous Commander v3.4',
       investigationTimeline: [
         { time: '10:45:10', note: 'Auth error rate reached 5.4%.' },
         { time: '10:47:00', note: 'AI agent identified cache memory exhaustion and diagnosed missing TTL pattern.' },
@@ -440,7 +440,7 @@ aws elasticache modify-cache-cluster --cache-cluster-id auth-redis --cache-node-
         { item: 'Zero loss of authenticated session data', passed: true },
       ],
       approvalStatus: 'EXECUTED',
-      approvedBy: 'Alex Chen (Senior SRE) + Team Rocket Agent',
+      approvedBy: 'Alex Chen (Senior SRE) + TARSIER Agent',
       approvedAt: '10:49:15 UTC',
     },
     recovery: {
@@ -469,7 +469,7 @@ aws elasticache modify-cache-cluster --cache-cluster-id auth-redis --cache-node-
         id: 'log-302',
         timestamp: '10:58:34.120',
         level: 'INFO',
-        service: 'Team Rocket Agent',
+        service: 'TARSIER Agent',
         message: 'Remediation applied successfully. Service auth-iam stabilized at 45ms latency.',
       },
     ],

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Rocket,
   Sun,
   Moon,
   Laptop,
@@ -15,6 +14,7 @@ import {
   ShieldCheck,
   CheckCircle2,
 } from 'lucide-react';
+import { TarsierLogo } from './TarsierLogo';
 import { useTheme, ThemeMode } from '../context/ThemeContext';
 import { Incident, ServiceHealth } from '../types';
 
@@ -79,20 +79,13 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
           <div className="flex items-center space-x-2.5 shrink-0">
             <button
               onClick={() => onSelectTab('overview')}
-              className="flex items-center space-x-2 text-left group cursor-pointer focus:outline-none"
-              title="Team Rocket Home"
+              className="flex items-center text-left group cursor-pointer focus:outline-none"
+              title="TARSIER Home"
             >
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-rose-500 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
-                <Rocket className="w-3.5 h-3.5" />
-              </div>
-              <div className="flex items-center space-x-1.5">
-                <span className="font-semibold text-xs sm:text-sm tracking-tight text-[var(--text-primary)]">
-                  Rocket
-                </span>
-                <span className="hidden lg:inline-block w-1.5 h-1.5 rounded-full" style={{
-                  backgroundColor: isHealthy ? '#10b981' : criticalCount > 0 ? '#f43f5e' : '#f59e0b'
-                }}></span>
-              </div>
+              <TarsierLogo size={28} showWordmark={true} />
+              <span className="hidden lg:inline-block ml-2 w-1.5 h-1.5 rounded-full" style={{
+                backgroundColor: isHealthy ? '#10b981' : criticalCount > 0 ? '#f43f5e' : '#f59e0b'
+              }}></span>
             </button>
           </div>
 
@@ -236,15 +229,15 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
               )}
             </div>
 
-            {/* Notch-Style Primary White Action Button: Voice Assistant */}
+            {/* Notch-Style Primary White Action Button: TARSIER Voice */}
             <button
               type="button"
               onClick={onOpenVoiceAssistant}
               className="notch-btn-primary text-xs px-3 sm:px-3.5 py-1.5 shadow-sm"
-              title="Launch Voice Assistant (⌘K)"
+              title="Launch TARSIER Voice (⌘K)"
             >
               <Mic className="w-3.5 h-3.5 text-indigo-500" />
-              <span className="hidden sm:inline">Voice AI</span>
+              <span className="hidden sm:inline">TARSIER Voice</span>
             </button>
 
             {/* Mobile Hamburger Toggle */}
