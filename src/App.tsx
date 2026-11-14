@@ -1,434 +1,448 @@
 import React, { useState, useEffect } from 'react';
-import { FloatingNav, NavTab } from './components/FloatingNav';
-import { OverviewStats } from './components/OverviewStats';
-import { ServiceGrid } from './components/ServiceGrid';
-import { WebsiteDetailView } from './components/WebsiteDetailView';
-import { IncidentTable } from './components/IncidentTable';
-import { IncidentDetailModal } from './components/IncidentDetailModal';
-import { AiInvestigationView } from './components/AiInvestigationView';
-import { RecoveryView } from './components/RecoveryView';
-import { ReportsView } from './components/ReportsView';
-import { VoiceAssistantModal } from './components/VoiceAssistantModal';
-import { WelcomePage } from './components/WelcomePage';
-import { SignInPage } from './components/SignInPage';
-import { RegisterPage } from './components/RegisterPage';
-import { ThemeProvider } from './context/ThemeContext';
+import { Navbar } from './components/tarsier/Navbar';
+import { WelcomePage } from './components/tarsier/WelcomePage';
+import { AuthModal } from './components/tarsier/AuthModal';
+import { DashboardView } from './components/tarsier/DashboardView';
+import { WebsiteDetailView } from './components/tarsier/WebsiteDetailView';
+import { SupportView } from './components/tarsier/SupportView';
+import { AddWebsiteModal } from './components/tarsier/AddWebsiteModal';
+import { VoiceAssistantModal } from './components/tarsier/VoiceAssistantModal';
+import { ToastNotification, ToastMessage } from './components/tarsier/ToastNotification';
 import {
-  getServices,
-  getIncidents,
-  simulateScenario,
-  resetAllSimulations,
-  approveRemediation,
-  executeRecoveryProgress,
-} from './services/incidentService';
-import { Incident, ServiceHealth, VoiceCommandResponse } from './types';
-import { CheckCircle2, ShieldAlert, Sparkles, X, Mic } from 'lucide-react';
+  INITIAL_WEBSITES,
+  INITIAL_INCIDENTS,
+  INITIAL_LOGS,
+  INITIAL_USER,
+} from './data/tarsierMockData';
+import {
+  AppView,
+  MonitoredWebsite,
+  WebsiteIncident,
+  WebsiteLog,
+  UserProfile,
+  VoiceCommandResult,
+} from './types/tarsier';
+import { api } from './services/api';
 
-export type AppView = 'welcome' | 'signin' | 'register' | 'dashboard';
+export function App() {
+  const [currentView, setCurrentView] = useState<AppView>('welcome');
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [websites, setWebsites] = useState<MonitoredWebsite[]>(INITIAL_WEBSITES);
+  const [incidents, setIncidents] = useState<WebsiteIncident[]>(INITIAL_INCIDENTS);
+  const [logs, setLogs] = useState<WebsiteLog[]>(INITIAL_LOGS);
 
-function DashboardContent() {
-  const [appView, setAppView] = useState<AppView>('welcome');
-  const [user, setUser] = useState<{ name: string; email: string } | null>({
-    name: 'Alex Chen (SRE)',
-    email: 'alex.chen@enterprise.io',
-  });
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>('site-2');
+  const [pausedSites, setPausedSites] = useState<Set<string>>(new Set());
 
-  const [services, setServices] = useState<ServiceHealth[]>([]);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [currentTab, setCurrentTab] = useState<NavTab>('overview');
-  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
-  const [selectedService, setSelectedService] = useState<ServiceHealth | null>(null);
-  const [inspectedWebsite, setInspectedWebsite] = useState<ServiceHealth | null>(null);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
-  const [modalInitialTab, setModalInitialTab] = useState<'rca' | 'metrics' | 'logs' | 'remediation' | 'recovery'>('rca');
-  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'alert' | 'success' | 'info' } | null>(null);
+  // Modals & Chaos
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<'signin' | 'register'>('signin');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [chaosActive, setChaosActive] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
-  // Load initial data
-  useEffect(() => {
-    setServices(getServices());
-    setIncidents(getIncidents());
-  }, []);
+  // Toast
+  const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  // Keyboard shortcut: Cmd+K / Ctrl+K opens Voice Assistant
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setIsVoiceModalOpen((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const showToast = (title: string, desc: string, type: 'alert' | 'success' | 'info' = 'info') => {
-    setToastMessage({ title, desc, type });
+  const showToast = (title: string, desc: string, type: 'success' | 'alert' | 'info' = 'info') => {
+    setToast({ title, desc, type });
     setTimeout(() => {
-      setToastMessage(null);
+      setToast(null);
     }, 4500);
   };
 
-  const handleSimulateScenario = (scenarioId?: string) => {
-    const { incident, service } = simulateScenario(scenarioId);
-    setServices(getServices());
-    setIncidents(getIncidents());
-    setSelectedIncident(incident);
-    showToast(
-      `🚨 New Incident Ingested: ${incident.id}`,
-      `Chaos injected into ${service.name}. TARSIER AI has generated root cause hypothesis.`,
-      'alert'
-    );
+  // Mount: verify backend health
+  useEffect(() => {
+    api.checkHealth().then((health) => {
+      if (health.ollama?.connected) {
+        showToast('Ollama AI Online', `Connected to local workstation reasoning engine: ${health.ollama.model || 'qwen2.5:7b'}`, 'info');
+      }
+    });
+  }, []);
+
+  // Automated simulated heartbeat ticker for realistic telemetry
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setWebsites((prev) =>
+        prev.map((site) => {
+          if (pausedSites.has(site.id)) return site;
+
+          // Jitter latency slightly (+/- 2ms)
+          const jitter = Math.floor(Math.random() * 5) - 2;
+          const newLatency =
+            site.status === 'down'
+              ? 14000 + Math.floor(Math.random() * 800)
+              : Math.max(12, site.latencyMs + jitter);
+
+          return {
+            ...site,
+            latencyMs: newLatency,
+            lastCheckSecondsAgo: (site.lastCheckSecondsAgo + 2) % 30,
+          };
+        })
+      );
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [pausedSites]);
+
+  // Handle Navigation
+  const handleNavigate = (view: AppView) => {
+    setCurrentView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleResetAll = () => {
-    resetAllSimulations();
-    setServices(getServices());
-    setIncidents(getIncidents());
-    setSelectedIncident(null);
-    setSelectedService(null);
-    setInspectedWebsite(null);
+  // Open Auth Modal
+  const handleOpenAuth = (initialTab: 'signin' | 'register' = 'signin') => {
+    setAuthModalTab(initialTab);
+    setIsAuthModalOpen(true);
+  };
+
+  // Handle Login Success
+  const handleLoginSuccess = (loggedInUser: UserProfile) => {
+    setUser(loggedInUser);
+    setIsAuthModalOpen(false);
+    setCurrentView('dashboard');
     showToast(
-      'System State Restored',
-      'All 12 microservices returned to 100% operational baseline.',
+      `Welcome to TARSIER, ${loggedInUser.name}`,
+      `Connected to Team Rocket Night Guard. Surveillance active on ${websites.length} websites.`,
       'success'
     );
   };
 
-  const handleApproveRemediation = (incidentId: string) => {
-    const updated = approveRemediation(incidentId);
-    if (updated) {
-      setIncidents(getIncidents());
-      setServices(getServices());
-      setSelectedIncident(updated);
-      showToast(
-        'Remediation Authorized',
-        `Human on-call safety gate approved execution for ${incidentId}.`,
-        'success'
-      );
-    }
+  // Handle Logout
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentView('welcome');
+    showToast('Signed Out', 'You have been disconnected from SRE Night Guard.', 'info');
   };
 
-  const handleCompleteRecovery = (incidentId: string) => {
-    const updated = executeRecoveryProgress(incidentId);
-    if (updated) {
-      setIncidents(getIncidents());
-      setServices(getServices());
-      setSelectedIncident(updated);
-      showToast(
-        'Incident Resolved',
-        `${incidentId} telemetry stabilized and verified by automated canary probes.`,
-        'success'
-      );
-    }
+  // Select Website to Inspect
+  const handleSelectWebsite = (websiteId: string) => {
+    setSelectedWebsiteId(websiteId);
+    setCurrentView('website-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSelectService = (svc: ServiceHealth) => {
-    setSelectedService(svc);
-    const relatedIncident = incidents.find(
-      (i) => i.affectedServiceId === svc.id && i.status !== 'RESOLVED'
+  // Add new website
+  const handleAddWebsite = (newSite: MonitoredWebsite) => {
+    setWebsites((prev) => [newSite, ...prev]);
+    showToast(
+      'Target Added to Night Guard',
+      `${newSite.name} is now surveilled across 5 global multi-region probes.`,
+      'success'
     );
-    if (relatedIncident) {
-      setSelectedIncident(relatedIncident);
-    }
   };
 
-  const handleVoiceAction = (action: VoiceCommandResponse['uiAction']) => {
+  // Run Synthetic Probe On Demand
+  const handleRunSyntheticProbe = (websiteId: string) => {
+    const target = websites.find((w) => w.id === websiteId);
+    if (!target) return;
+
+    const probedLatency =
+      target.status === 'down'
+        ? 14200
+        : Math.floor(Math.random() * 15) + (target.category === 'Security' ? 18 : 32);
+
+    setWebsites((prev) =>
+      prev.map((w) =>
+        w.id === websiteId
+          ? {
+              ...w,
+              latencyMs: probedLatency,
+              lastCheckSecondsAgo: 0,
+            }
+          : w
+      )
+    );
+
+    // Add probe log
+    const newLog: WebsiteLog = {
+      id: `log-probe-${Date.now()}`,
+      websiteId,
+      timestamp: new Date().toISOString(),
+      severity: target.status === 'down' ? 'ERROR' : 'INFO',
+      service: 'synthetic-sentinel',
+      message: `Manual probe dispatched from US-East probe cluster. Result: HTTP ${target.httpStatus} (${probedLatency}ms).`,
+      format: 'syslog',
+      isSuspicious: false,
+      riskScore: 0,
+      statusCode: target.httpStatus,
+    };
+    setLogs((prev) => [newLog, ...prev]);
+
+    showToast(
+      'Synthetic Probe Executed',
+      `${target.name} responded with HTTP ${target.httpStatus} in ${probedLatency}ms.`,
+      target.status === 'down' ? 'alert' : 'success'
+    );
+  };
+
+  // Toggle Surveillance Pause
+  const handleToggleSurveillance = (websiteId: string) => {
+    setPausedSites((prev) => {
+      const next = new Set(prev);
+      const isCurrentlyPaused = next.has(websiteId);
+      if (isCurrentlyPaused) {
+        next.delete(websiteId);
+        showToast('Surveillance Resumed', 'Night Guard active checks restored.', 'info');
+      } else {
+        next.add(websiteId);
+        showToast('Surveillance Paused', 'Night Guard probes paused for target.', 'alert');
+      }
+      return next;
+    });
+  };
+
+  // Interactive Remediation of Incident (Enforced via Human Approval Gate)
+  const handleRemediateIncident = (incidentId: string) => {
+    const targetInc = incidents.find((i) => i.id === incidentId);
+    if (!targetInc) return;
+
+    // Update incident status
+    setIncidents((prev) =>
+      prev.map((inc) =>
+        inc.id === incidentId
+          ? {
+              ...inc,
+              status: 'RESOLVED',
+              isRemediated: true,
+              timeline: [
+                ...inc.timeline,
+                {
+                  time: new Date().toLocaleTimeString() + ' UTC',
+                  text: 'SRE Commander authorized automated remediation via Human Approval Safety Gate.',
+                  actor: 'SRE Commander',
+                },
+                {
+                  time: new Date().toLocaleTimeString() + ' UTC',
+                  text: 'Synthetic verification confirmed 100% 200 OK responses with 28ms latency.',
+                  actor: 'Synthetic Sentinel',
+                },
+              ],
+            }
+          : inc
+      )
+    );
+
+    // Restore the affected website to healthy
+    setWebsites((prev) =>
+      prev.map((w) =>
+        w.id === targetInc.websiteId
+          ? {
+              ...w,
+              status: 'healthy',
+              httpStatus: 200,
+              latencyMs: 28,
+              activeIncidentCount: 0,
+              historicalLatency: [
+                ...w.historicalLatency,
+                { time: '14:20', latencyMs: 28, statusCode: 200 },
+              ],
+            }
+          : w
+      )
+    );
+
+    showToast(
+      'Remediation Executed & Verified',
+      `Incident ${incidentId} resolved. ${targetInc.websiteName} restored to 100% healthy baseline.`,
+      'success'
+    );
+  };
+
+  // Toggle Outage on a specific website
+  const handleSimulateOutage = (websiteId: string) => {
+    setWebsites((prev) =>
+      prev.map((w) => {
+        if (w.id !== websiteId) return w;
+        const newStatus = w.status === 'down' ? 'healthy' : 'down';
+        const newHttpStatus = newStatus === 'down' ? 504 : 200;
+        const newLatency = newStatus === 'down' ? 14500 : 26;
+
+        return {
+          ...w,
+          status: newStatus,
+          httpStatus: newHttpStatus,
+          latencyMs: newLatency,
+          activeIncidentCount: newStatus === 'down' ? 1 : 0,
+        };
+      })
+    );
+
+    showToast(
+      'Synthetic Outage Toggled',
+      `Toggled status on target website. Night Guard evaluated failure propagation.`,
+      'info'
+    );
+  };
+
+  // Chaos Injection Across Fleet
+  const handleTriggerChaos = () => {
+    if (chaosActive) {
+      handleRestoreAll();
+      return;
+    }
+
+    setChaosActive(true);
+
+    // Inject chaos into store and api
+    setWebsites((prev) =>
+      prev.map((w) => {
+        if (w.id === 'site-2') {
+          return {
+            ...w,
+            status: 'down',
+            httpStatus: 504,
+            latencyMs: 14800,
+            activeIncidentCount: 1,
+          };
+        }
+        if (w.id === 'site-1' || w.id === 'site-4') {
+          return {
+            ...w,
+            status: 'warning',
+            latencyMs: 380,
+            activeIncidentCount: 1,
+          };
+        }
+        return w;
+      })
+    );
+
+    showToast(
+      '🚨 Chaos Scenario Injected',
+      'Simulated dual-cause DB pool starvation + carrier gateway 504 timeout cascade.',
+      'alert'
+    );
+  };
+
+  // Restore All
+  const handleRestoreAll = () => {
+    setChaosActive(false);
+    setWebsites(
+      INITIAL_WEBSITES.map((w) => ({
+        ...w,
+        status: 'healthy',
+        httpStatus: 200,
+        latencyMs: w.category === 'Security' ? 22 : w.category === 'Infrastructure' ? 14 : 32,
+        activeIncidentCount: 0,
+      }))
+    );
+
+    setIncidents((prev) =>
+      prev.map((i) => ({
+        ...i,
+        status: 'RESOLVED',
+        isRemediated: true,
+      }))
+    );
+
+    showToast(
+      'Fleet Baseline Restored',
+      'All websites returned to 100% operational baseline with 0 open incidents.',
+      'success'
+    );
+  };
+
+  // Dispatch UI Actions from Voice Assistant
+  const handleExecuteUiAction = (action: VoiceCommandResult['uiAction']) => {
     if (!action) return;
 
-    switch (action.type) {
-      case 'OPEN_INCIDENT': {
-        const targetId = (action.payload?.incidentId as string) || 'INC-8092';
-        const inc = incidents.find((i) => i.id === targetId) || incidents[0];
-        if (inc) {
-          setSelectedIncident(inc);
-          setModalInitialTab('rca');
-          showToast('Voice Command Executed', `Inspecting incident ${inc.id}`, 'info');
-        }
-        break;
-      }
-      case 'SELECT_SERVICE': {
-        const serviceId = (action.payload?.serviceId as string) || 'svc-payment';
-        const svc = services.find((s) => s.id === serviceId);
-        if (svc) {
-          handleSelectService(svc);
-          setCurrentTab('services');
-          showToast('Service Selected', `Viewing telemetry for ${svc.name}`, 'info');
-        }
-        break;
-      }
-      case 'SWITCH_TAB': {
-        const targetTab = (action.payload?.tab as NavTab) || 'overview';
-        setCurrentTab(targetTab);
-        showToast('Tab Switched', `Navigated to ${targetTab} view`, 'info');
-        break;
-      }
-      case 'SHOW_MODAL_TAB': {
-        const tabName = (action.payload?.tab as 'rca' | 'remediation' | 'recovery' | 'logs' | 'metrics') || 'rca';
-        const targetInc = selectedIncident || incidents.find((i) => i.status !== 'RESOLVED') || incidents[0];
-        if (targetInc) {
-          setModalInitialTab(tabName);
-          setSelectedIncident(targetInc);
-          if (tabName === 'remediation') {
-            showToast('Safety Gate Active', 'Remediation requires manual on-call authorization.', 'alert');
-          }
-        }
-        break;
-      }
-      case 'NONE':
-      default:
-        break;
+    if (action.type === 'SELECT_SERVICE' && action.payload?.websiteId) {
+      handleSelectWebsite(action.payload.websiteId as string);
+    } else if (action.type === 'OPEN_INCIDENT' && action.payload?.websiteId) {
+      handleSelectWebsite(action.payload.websiteId as string);
     }
   };
 
-  // 1. ROUTE: Welcome Page
-  if (appView === 'welcome') {
-    return (
-      <WelcomePage
-        onEnterDashboard={() => setAppView('dashboard')}
-        onNavigateSignIn={() => setAppView('signin')}
-        onNavigateRegister={() => setAppView('register')}
-      />
-    );
-  }
+  const selectedWebsite =
+    websites.find((w) => w.id === selectedWebsiteId) || websites[0];
 
-  // 2. ROUTE: Sign In Page
-  if (appView === 'signin') {
-    return (
-      <SignInPage
-        onSignInSuccess={() => {
-          setUser({ name: 'Alex Chen (SRE)', email: 'alex.chen@enterprise.io' });
-          setAppView('dashboard');
-        }}
-        onNavigateRegister={() => setAppView('register')}
-        onNavigateWelcome={() => setAppView('welcome')}
-      />
-    );
-  }
+  const activeIncidentsCount = incidents.filter((i) => i.status !== 'RESOLVED').length;
 
-  // 3. ROUTE: Register Page
-  if (appView === 'register') {
-    return (
-      <RegisterPage
-        onRegisterSuccess={() => {
-          setUser({ name: 'New SRE Commander', email: 'commander@tarsier.mesh' });
-          setAppView('dashboard');
-        }}
-        onNavigateSignIn={() => setAppView('signin')}
-        onNavigateWelcome={() => setAppView('welcome')}
-      />
-    );
-  }
-
-  // 4. ROUTE: Main Dashboard
   return (
-    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col antialiased selection:bg-blue-500/20 selection:text-blue-400">
-      
-      {/* Centered Floating Capsule Navigation */}
-      <FloatingNav
-        currentTab={currentTab}
-        onSelectTab={(tab) => {
-          setCurrentTab(tab);
-          setInspectedWebsite(null);
-        }}
-        incidents={incidents}
-        services={services}
-        onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
-        onSimulateScenario={handleSimulateScenario}
-        onResetAll={handleResetAll}
+    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-slate-900 text-slate-100'} flex flex-col font-sans selection:bg-[#007AFF]/30 selection:text-white`}>
+      {/* Toast Notification Container */}
+      <ToastNotification toast={toast} onClose={() => setToast(null)} />
+
+      {/* Top Navigation */}
+      <Navbar
+        currentView={currentView}
+        onNavigate={handleNavigate}
+        onOpenAuth={handleOpenAuth}
         user={user}
-        onSignOut={() => {
-          setUser(null);
-          setAppView('welcome');
-        }}
-        onNavigateWelcome={() => setAppView('welcome')}
+        onLogout={handleLogout}
+        activeIncidentsCount={activeIncidentsCount}
+        onOpenVoice={() => setIsVoiceModalOpen(true)}
+        isDarkMode={isDarkMode}
+        onToggleTheme={() => setIsDarkMode(!isDarkMode)}
       />
 
-      {/* Main Spacious Content Canvas */}
-      <main className="flex-1 w-full pt-24 sm:pt-28 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          {/* TAB 1: OVERVIEW */}
-          {currentTab === 'overview' && (
-            <div className="animate-in fade-in duration-200">
-              <OverviewStats
-                services={services}
-                incidents={incidents}
-                onSelectIncident={(inc) => setSelectedIncident(inc)}
-                onSimulateScenario={handleSimulateScenario}
-                onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
-                onNavigateTab={(tab) => {
-                  setCurrentTab(tab);
-                  setInspectedWebsite(null);
-                }}
-              />
-            </div>
-          )}
+      {/* Main Content Router */}
+      <main className="flex-1">
+        {currentView === 'welcome' && (
+          <WelcomePage onNavigate={handleNavigate} onOpenAuth={handleOpenAuth} />
+        )}
 
-          {/* TAB 2: SERVICES & WEBSITES */}
-          {currentTab === 'services' && (
-            <div className="animate-in fade-in duration-200 space-y-6">
-              {inspectedWebsite ? (
-                /* 4-Tab Detailed Website Inspector (Overview, Attributes, Incidents, Logs) */
-                <WebsiteDetailView
-                  service={inspectedWebsite}
-                  incidents={incidents}
-                  onSelectIncident={(inc) => setSelectedIncident(inc)}
-                  onBack={() => setInspectedWebsite(null)}
-                />
-              ) : (
-                /* 12-Service Grid with Click to Inspect */
-                <>
-                  <div className="text-center max-w-xl mx-auto space-y-1.5 pt-4 pb-2">
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
-                      Architecture Topology
-                    </span>
-                    <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
-                      12 Monitored Microservices & Websites
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
-                      Select any service to expand real-time telemetry or inspect the full 4-tab Website Specification (Overview, Attributes, Incidents, Logs).
-                    </p>
-                  </div>
+        {currentView === 'dashboard' && (
+          <DashboardView
+            websites={websites}
+            incidents={incidents}
+            onSelectWebsite={handleSelectWebsite}
+            onOpenAddModal={() => setIsAddModalOpen(true)}
+            onTriggerChaos={handleTriggerChaos}
+            onRestoreAll={handleRestoreAll}
+            chaosActive={chaosActive}
+          />
+        )}
 
-                  <ServiceGrid
-                    services={services}
-                    onSelectService={handleSelectService}
-                    selectedServiceId={selectedService?.id}
-                    onInspectWebsite={(svc) => setInspectedWebsite(svc)}
-                  />
-                </>
-              )}
-            </div>
-          )}
+        {currentView === 'website-detail' && selectedWebsite && (
+          <WebsiteDetailView
+            website={selectedWebsite}
+            incidents={incidents}
+            logs={logs}
+            onBack={() => handleNavigate('dashboard')}
+            onRunSyntheticProbe={handleRunSyntheticProbe}
+            onToggleSurveillance={handleToggleSurveillance}
+            onRemediateIncident={handleRemediateIncident}
+            onSimulateOutage={handleSimulateOutage}
+            isPaused={pausedSites.has(selectedWebsite.id)}
+          />
+        )}
 
-          {/* TAB 3: INCIDENTS */}
-          {currentTab === 'incidents' && (
-            <div className="animate-in fade-in duration-200 space-y-6">
-              <div className="text-center max-w-xl mx-auto space-y-1.5 pt-4 pb-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
-                  Incident Triage Stream
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
-                  Active & Historical Incidents
-                </h2>
-                <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
-                  Continuous telemetry anomalies triaged by TARSIER AI.
-                </p>
-              </div>
-
-              <IncidentTable
-                incidents={incidents}
-                onSelectIncident={(inc) => setSelectedIncident(inc)}
-                selectedIncidentId={selectedIncident?.id}
-              />
-            </div>
-          )}
-
-          {/* TAB 4: AI ASSISTANT / INVESTIGATION */}
-          {currentTab === 'investigation' && (
-            <div className="animate-in fade-in duration-200">
-              <AiInvestigationView
-                incidents={incidents}
-                services={services}
-                onSelectIncident={(inc) => setSelectedIncident(inc)}
-              />
-            </div>
-          )}
-
-          {/* TAB 5: RECOVERY */}
-          {currentTab === 'recovery' && (
-            <div className="animate-in fade-in duration-200">
-              <RecoveryView
-                incidents={incidents}
-                onSelectIncident={(inc) => setSelectedIncident(inc)}
-                onApproveRemediation={handleApproveRemediation}
-                onCompleteRecovery={handleCompleteRecovery}
-              />
-            </div>
-          )}
-
-          {/* TAB 6: REPORTS */}
-          {currentTab === 'reports' && (
-            <div className="animate-in fade-in duration-200">
-              <ReportsView incidents={incidents} />
-            </div>
-          )}
-        </div>
+        {currentView === 'support' && (
+          <SupportView
+            websites={websites}
+            onBackToDashboard={() => handleNavigate('dashboard')}
+            onShowToast={showToast}
+          />
+        )}
       </main>
 
-      {/* Floating Dynamic Island / Notch Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-start space-x-3 p-4 rounded-2xl notch-card max-w-md animate-in slide-in-from-bottom-5 duration-300 shadow-2xl border border-[var(--border-medium)]">
-          <div className="p-1.5 rounded-xl shrink-0">
-            {toastMessage.type === 'alert' ? (
-              <ShieldAlert className="w-4 h-4 text-rose-500" />
-            ) : toastMessage.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            ) : (
-              <Sparkles className="w-4 h-4 text-blue-400" />
-            )}
-          </div>
-          <div className="space-y-0.5 flex-1">
-            <h4 className="text-xs font-semibold text-[var(--text-primary)]">{toastMessage.title}</h4>
-            <p className="text-xs text-[var(--text-secondary)] leading-snug">{toastMessage.desc}</p>
-          </div>
-          <button
-            onClick={() => setToastMessage(null)}
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 cursor-pointer transition-colors"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialTab={authModalTab}
+        onLoginSuccess={handleLoginSuccess}
+      />
 
-      {/* Floating Voice Assistant Trigger Pill */}
-      <button
-        type="button"
-        onClick={() => setIsVoiceModalOpen(true)}
-        className="fixed bottom-6 right-6 z-40 notch-pill px-4 py-2 flex items-center space-x-2 text-xs font-medium cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-xl group border border-[var(--border-medium)]"
-        title="Open TARSIER Voice (⌘K)"
-      >
-        <div className="relative">
-          <Mic className="w-3.5 h-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-          </span>
-        </div>
-        <span className="text-[var(--text-primary)] font-medium">TARSIER Voice</span>
-        <span className="text-[10px] font-mono px-1 rounded bg-[var(--tag-bg)] text-[var(--text-muted)]">
-          ⌘K
-        </span>
-      </button>
-
-      {/* Incident Detail Modal */}
-      {selectedIncident && (
-        <IncidentDetailModal
-          incident={selectedIncident}
-          initialTab={modalInitialTab}
-          onClose={() => setSelectedIncident(null)}
-          onApproveRemediation={handleApproveRemediation}
-          onCompleteRecovery={handleCompleteRecovery}
-        />
-      )}
+      {/* Add Website Modal */}
+      <AddWebsiteModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAddWebsite={handleAddWebsite}
+      />
 
       {/* Voice Assistant Modal */}
       <VoiceAssistantModal
         isOpen={isVoiceModalOpen}
         onClose={() => setIsVoiceModalOpen(false)}
-        onExecuteAction={handleVoiceAction}
-        activeIncidentId={selectedIncident?.id || incidents.find((i) => i.status !== 'RESOLVED')?.id}
-        selectedServiceId={selectedService?.id}
+        onExecuteUiAction={handleExecuteUiAction}
       />
     </div>
   );
 }
-
-export function App() {
-  return (
-    <ThemeProvider>
-      <DashboardContent />
-    </ThemeProvider>
-  );
-}
-
 export default App;
