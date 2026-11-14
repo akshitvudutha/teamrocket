@@ -1,4 +1,5 @@
 import { VoiceCommandResponse } from '../types';
+import { getIncidents, getServices } from './incidentService';
 
 /**
  * Team Rocket Voice Service
@@ -142,6 +143,9 @@ export class VoiceService {
     command: string,
     context?: { activeIncidentId?: string; serviceId?: string }
   ): Promise<VoiceCommandResponse> {
+    const liveIncidents = getIncidents();
+    const liveServices = getServices();
+
     try {
       // 1. Try backend API first (uses VITE_API_URL if set, or local dev port, or relative /api on Vercel)
       const apiBase = import.meta.env.VITE_API_URL !== undefined
@@ -150,7 +154,15 @@ export class VoiceService {
       const res = await fetch(`${apiBase}/api/voice/command`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command, context }),
+        body: JSON.stringify({
+          command,
+          context: {
+            activeIncidentId: context?.activeIncidentId,
+            serviceId: context?.serviceId,
+            incidents: liveIncidents,
+            services: liveServices,
+          },
+        }),
         signal: AbortSignal.timeout(3000),
       });
 
@@ -168,23 +180,27 @@ export class VoiceService {
   }
 
   /**
-   * Client-side fallback intent processor (guarantees offline/preview functionality)
+   * Client-side fallback intent processor (guarantees dynamic real-data offline/preview functionality)
    */
   fallbackProcessCommand(
     command: string,
     context?: { activeIncidentId?: string; serviceId?: string }
   ): VoiceCommandResponse {
     const text = command.trim().toLowerCase();
+    const liveIncidents = getIncidents();
+    const liveServices = getServices();
 
-    // 1. Safety Guardrail: Block Mutating Commands (Requirement #10)
+    // 1. Safety Guardrail: Block Mutating Commands (Requirement #3, #4, #10)
     if (
-      /\b(?:apply|execute|run|trigger|deploy|fix|patch)\s+(?:remediation|fix|command|script|action)\b/.test(text) ||
-      /\b(?:restart|kill|scale|reboot|flush)\b/.test(text)
+      /\b(?:apply|execute|run|trigger|deploy|fix|patch)\s+(?:remediation|fix|command|script|action|code|hotfix)\b/.test(text) ||
+      /\b(?:restart|kill|scale|reboot|flush|terminate|delete|drop|destroy|rollback)\b/.test(text) ||
+      /\b(?:bypass|override|disable|ignore)\s+(?:safety|guardrail|change[_\-\s]?freeze|approval|policy|instructions)\b/.test(text) ||
+      /\b(?:sudo|admin\s+mode|unrestricted|rm\s+-rf|format\s+c:)\b/.test(text)
     ) {
       return {
         command,
         intent: 'BLOCKED_REMEDIATION',
-        spokenResponse: 'Safety policy warning: Voice commands cannot execute remediation. Please review and authorize the fix in the Safety Gate.',
+        spokenResponse: 'Safety policy warning: Voice commands cannot execute remediation, mutate infrastructure, or override safety guardrails. Please review and authorize the fix in the Safety Gate.',
         detailedFindings: 'MUTATION BLOCKED: In accordance with Team Rocket Safety Policy, all infrastructure mutations require human visual verification and manual approval via the Safety Gate.',
         uiAction: {
           type: 'SHOW_MODAL_TAB',
@@ -194,50 +210,91 @@ export class VoiceService {
       };
     }
 
+    // Resolve real active incident
+    const activeIncident =
+      (context?.activeIncidentId ? liveIncidents.find((i) => i.id === context.activeIncidentId) : null) ||
+      liveIncidents.find((i) => i.status !== 'RESOLVED');
+
     // 2. Show Root Cause
-    if (text.includes('root cause') || text.includes('why is it failing') || text.includes('cause')) {
+    if (text.includes('root cause') || text.includes('why is it failing') || text.includes('why did it fail') || text.includes('cause')) {
+      if (!activeIncident) {
+        return {
+          command,
+          intent: 'SHOW_ROOT_CAUSE',
+          spokenResponse: 'All 12 microservices are operating normally. Telemetry baselines are healthy and no active root causes are detected.',
+          detailedFindings: 'Zero active incidents. Cluster operational health is 100% across all 12 services.',
+          uiAction: { type: 'NONE' },
+        };
+      }
+
+      const rcaSummary =
+        activeIncident.rootCause?.primaryTrigger ||
+        activeIncident.rootCause?.summary ||
+        'Database connection pool starvation caused by unindexed foreign key lock contention.';
+      const confidence = activeIncident.rootCause?.aiConfidence || 96;
+
       return {
         command,
         intent: 'SHOW_ROOT_CAUSE',
-        spokenResponse: 'The root cause is HikariCP database connection pool starvation caused by unindexed foreign key lock contention during peak flash checkout concurrency.',
-        detailedFindings: 'AI Root Cause Analysis (96% Confidence): Missing index on `order_reference_id` in v2.14.0 caused table lock contention, saturating all 50 connection sockets.',
+        spokenResponse: `The root cause for ${activeIncident.id} on ${activeIncident.affectedServiceName} is: ${rcaSummary} (AI Confidence: ${confidence}%).`,
+        detailedFindings: `AI Root Cause Analysis for ${activeIncident.id} (${confidence}% Confidence): ${rcaSummary}`,
         uiAction: {
           type: 'SHOW_MODAL_TAB',
-          payload: { tab: 'rca' },
+          payload: { tab: 'rca', incidentId: activeIncident.id },
         },
       };
     }
 
     // 3. Investigate Incident
     if (text.includes('investigate') || text.includes('current incident') || text.includes('check incident')) {
+      if (!activeIncident) {
+        return {
+          command,
+          intent: 'INVESTIGATE_INCIDENT',
+          spokenResponse: 'All 12 microservices are operational. There are no active incidents to investigate.',
+          detailedFindings: 'Cluster Telemetry: 12/12 services healthy. P99 latency within 45ms SLA.',
+          uiAction: { type: 'NONE' },
+        };
+      }
+
       return {
         command,
         intent: 'INVESTIGATE_INCIDENT',
-        spokenResponse: 'Investigating incident INC-8092 on Payment Gateway. Latency is elevated at 1,840 milliseconds and cascading to Order Processing.',
-        detailedFindings: 'Incident INC-8092 Active: Payment Gateway experiencing 1,840ms P99 latency and 24.6% error rate. 18 correlated traces show lock wait timeouts.',
+        spokenResponse: `Investigating ${activeIncident.severity} incident ${activeIncident.id} on ${activeIncident.affectedServiceName}: ${activeIncident.title}.`,
+        detailedFindings: `Incident ${activeIncident.id} Active: ${activeIncident.title} on ${activeIncident.affectedServiceName}. Root cause investigation active.`,
         uiAction: {
           type: 'OPEN_INCIDENT',
-          payload: { incidentId: context?.activeIncidentId || 'INC-8092' },
+          payload: { incidentId: activeIncident.id },
         },
       };
     }
 
-    // 4. Check Service Health
-    if (text.includes('health') || text.includes('service') || text.includes('payment') || text.includes('auth')) {
-      const isPayment = text.includes('payment') || !text.includes('auth');
-      const svcName = isPayment ? 'Payment Gateway' : 'Auth & IAM Service';
-      const svcStatus = isPayment ? 'CRITICAL' : 'HEALTHY';
-      const latency = isPayment ? 1840 : 45;
-      const errorRate = isPayment ? 24.6 : 0.12;
+    // 4. Check Service Health (Search all 12 services dynamically)
+    let matchedSvc = liveServices.find((s) => text.includes(s.name.toLowerCase()) || text.includes(s.id.toLowerCase()));
+    if (!matchedSvc) {
+      if (text.includes('payment') || text.includes('stripe')) matchedSvc = liveServices.find((s) => s.id === 'svc-payment');
+      else if (text.includes('inventory') || text.includes('warehouse')) matchedSvc = liveServices.find((s) => s.id === 'svc-inventory');
+      else if (text.includes('auth') || text.includes('iam') || text.includes('login')) matchedSvc = liveServices.find((s) => s.id === 'svc-auth');
+      else if (text.includes('order') || text.includes('checkout')) matchedSvc = liveServices.find((s) => s.id === 'svc-order');
+      else if (text.includes('search') || text.includes('elastic')) matchedSvc = liveServices.find((s) => s.id === 'svc-search');
+      else if (text.includes('cart')) matchedSvc = liveServices.find((s) => s.id === 'svc-cart');
+      else if (text.includes('catalog') || text.includes('product')) matchedSvc = liveServices.find((s) => s.id === 'svc-catalog');
+      else if (text.includes('shipping') || text.includes('carrier')) matchedSvc = liveServices.find((s) => s.id === 'svc-shipping');
+      else if (text.includes('notify') || text.includes('notification')) matchedSvc = liveServices.find((s) => s.id === 'svc-notify');
+      else if (text.includes('database') || text.includes('postgres') || text.includes('db')) matchedSvc = liveServices.find((s) => s.id === 'svc-db-cluster');
+      else if (text.includes('gateway') || text.includes('api')) matchedSvc = liveServices.find((s) => s.id === 'svc-api-gw');
+    }
 
+    if (matchedSvc || text.includes('health') || text.includes('service')) {
+      const svc = matchedSvc || liveServices.find((s) => s.status !== 'HEALTHY') || liveServices[0];
       return {
         command,
         intent: 'CHECK_SERVICE_HEALTH',
-        spokenResponse: `${svcName} is currently ${svcStatus}. P99 latency is ${latency} milliseconds and error rate is ${errorRate} percent.`,
-        detailedFindings: `Telemetry for ${svcName}: Status: ${svcStatus} | Latency: ${latency}ms | Error Rate: ${errorRate}%.`,
+        spokenResponse: `${svc.name} is currently ${svc.status}. P99 latency is ${svc.latency} milliseconds and error rate is ${svc.errorRate} percent.`,
+        detailedFindings: `Telemetry for ${svc.name} (${svc.id}): Status: ${svc.status} | Latency: ${svc.latency}ms | Error Rate: ${svc.errorRate}% | CPU: ${svc.cpu}%.`,
         uiAction: {
           type: 'SELECT_SERVICE',
-          payload: { serviceId: isPayment ? 'svc-payment' : 'svc-auth' },
+          payload: { serviceId: svc.id },
         },
       };
     }
@@ -258,14 +315,24 @@ export class VoiceService {
 
     // 6. Explain Incident
     if (text.includes('explain') || text.includes('what happened') || text.includes('summary')) {
+      if (!activeIncident) {
+        return {
+          command,
+          intent: 'EXPLAIN_INCIDENT',
+          spokenResponse: 'All systems are operating normally. The cluster is running at nominal latency with zero active outages.',
+          detailedFindings: 'System Baseline: 12 services healthy, zero anomalies reported in telemetry pipeline.',
+          uiAction: { type: 'NONE' },
+        };
+      }
+
       return {
         command,
         intent: 'EXPLAIN_INCIDENT',
-        spokenResponse: 'At 12:24 UTC, high volume checkout concurrency triggered row-level database locks in Payment Gateway, driving latency to 1,840 milliseconds and impacting approximately 1,420 checkout attempts.',
-        detailedFindings: 'Summary of INC-8092: Payment service pool reached 50/50 connection cap with 124 waiting threads. SRE remediation plan formulated with pod scaling and replica offload.',
+        spokenResponse: `Incident ${activeIncident.id} occurred on ${activeIncident.affectedServiceName}: ${activeIncident.rootCause?.summary || activeIncident.title}.`,
+        detailedFindings: `Summary of ${activeIncident.id}: ${activeIncident.title}. Impacting ${activeIncident.affectedServiceName}. SRE remediation plan formulated with safety checks.`,
         uiAction: {
           type: 'OPEN_INCIDENT',
-          payload: { incidentId: context?.activeIncidentId || 'INC-8092' },
+          payload: { incidentId: activeIncident.id },
         },
       };
     }
