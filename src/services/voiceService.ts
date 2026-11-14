@@ -143,8 +143,11 @@ export class VoiceService {
     context?: { activeIncidentId?: string; serviceId?: string }
   ): Promise<VoiceCommandResponse> {
     try {
-      // 1. Try backend API first
-      const res = await fetch('http://localhost:5000/api/voice/command', {
+      // 1. Try backend API first (uses VITE_API_URL if set, or local dev port, or relative /api on Vercel)
+      const apiBase = import.meta.env.VITE_API_URL !== undefined
+        ? import.meta.env.VITE_API_URL
+        : (import.meta.env.DEV ? 'http://localhost:5000' : '');
+      const res = await fetch(`${apiBase}/api/voice/command`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command, context }),
