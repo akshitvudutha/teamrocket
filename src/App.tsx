@@ -39,8 +39,8 @@ export function App() {
   const showToast = (title: string, desc: string, type: 'alert' | 'success' | 'info' = 'info') => {
     setToastMessage({ title, desc, type });
     setTimeout(() => {
-      setToastMessage(null);
-    }, 4500);
+      setToastMessage(null), 4500;
+    });
   };
 
   const handleSimulateScenario = (scenarioId?: string) => {
@@ -159,28 +159,28 @@ export function App() {
   const criticalIncidents = activeIncidents.filter((i) => i.severity === 'CRITICAL');
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-rose-500/30 selection:text-rose-200">
-      {/* Toast Notification */}
+    <div className="min-h-screen bg-[#090a0f] text-slate-100 flex flex-col font-sans selection:bg-indigo-500/30 selection:text-indigo-200 antialiased">
+      {/* Apple Dynamic Island / Linear Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-start space-x-3 p-4 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl max-w-md animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-50 flex items-start space-x-3 p-4 rounded-2xl bg-[#141724]/95 backdrop-blur-2xl border border-white/[0.12] shadow-2xl max-w-md animate-in slide-in-from-bottom-5 duration-300">
           <div className="p-2 rounded-xl shrink-0">
             {toastMessage.type === 'alert' ? (
-              <ShieldAlert className="w-5 h-5 text-red-400" />
+              <ShieldAlert className="w-5 h-5 text-rose-400" />
             ) : toastMessage.type === 'success' ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />
             ) : (
-              <Sparkles className="w-5 h-5 text-purple-400" />
+              <Sparkles className="w-5 h-5 text-indigo-400" />
             )}
           </div>
           <div className="space-y-0.5 flex-1">
-            <h4 className="text-xs font-bold text-slate-100">{toastMessage.title}</h4>
+            <h4 className="text-xs font-semibold text-white">{toastMessage.title}</h4>
             <p className="text-xs text-slate-400 leading-snug">{toastMessage.desc}</p>
           </div>
           <button
             onClick={() => setToastMessage(null)}
-            className="text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+            className="text-slate-400 hover:text-white p-1 cursor-pointer transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
@@ -207,26 +207,80 @@ export function App() {
 
         {/* View Content Area */}
         <main className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
-          {/* TAB 1: OVERVIEW */}
-          {currentTab === 'overview' && (
-            <div className="space-y-8 animate-in fade-in duration-200">
-              {/* Overview Stats Cards */}
-              <OverviewStats services={services} incidents={incidents} />
+          <div className="max-w-[1700px] mx-auto space-y-6">
+            {/* TAB 1: OVERVIEW */}
+            {currentTab === 'overview' && (
+              <div className="space-y-7 animate-in fade-in duration-200">
+                {/* Overview Stats Cards */}
+                <OverviewStats services={services} incidents={incidents} />
 
-              {/* Active Incidents Section */}
-              <div className="space-y-3">
+                {/* Active Incidents Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-white tracking-tight">Active Incident Stream</h3>
+                      <p className="text-xs text-slate-400">
+                        Real-time telemetry anomalies triaged by Team Rocket AI Agent.
+                      </p>
+                    </div>
+                    {activeIncidents.length > 0 && (
+                      <span className="text-[10px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                        {activeIncidents.length} Unresolved Incident{activeIncidents.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+
+                  <IncidentTable
+                    incidents={incidents}
+                    onSelectIncident={(inc) => setSelectedIncident(inc)}
+                    selectedIncidentId={selectedIncident?.id}
+                  />
+                </div>
+
+                {/* 12-Service Health Cards */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-white tracking-tight">
+                        E-Commerce Application Cluster (12 Microservices)
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Live cluster health, latency (P99), error rates, and CPU utilization.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setCurrentTab('services')}
+                      className="text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    >
+                      View All Services &rarr;
+                    </button>
+                  </div>
+
+                  <ServiceGrid
+                    services={services}
+                    onSelectService={handleSelectService}
+                    selectedServiceId={selectedService?.id}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: INCIDENTS */}
+            {currentTab === 'incidents' && (
+              <div className="space-y-6 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-slate-100">Live Incident Stream</h3>
+                    <h2 className="text-lg font-semibold text-white tracking-tight">Active & Historical Incidents</h2>
                     <p className="text-xs text-slate-400">
-                      Real-time telemetry anomalies triaged by Team Rocket AI Agent.
+                      Search and filter incidents across all 12 microservices.
                     </p>
                   </div>
-                  {activeIncidents.length > 0 && (
-                    <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-rose-950/80 text-rose-300 border border-rose-800">
-                      {activeIncidents.length} Unresolved Incident{activeIncidents.length > 1 ? 's' : ''}
-                    </span>
-                  )}
+                  <button
+                    onClick={() => handleSimulateScenario()}
+                    className="px-3.5 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium shadow-xs shadow-rose-950 transition cursor-pointer"
+                  >
+                    + Simulate Chaos Scenario
+                  </button>
                 </div>
 
                 <IncidentTable
@@ -235,24 +289,18 @@ export function App() {
                   selectedIncidentId={selectedIncident?.id}
                 />
               </div>
+            )}
 
-              {/* 12-Service Health Cards */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-100">
-                      E-Commerce Application Services (12 Microservices)
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      Live cluster health, latency (P99), error rates, and CPU utilization.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setCurrentTab('services')}
-                    className="text-xs font-semibold text-rose-400 hover:text-rose-300 cursor-pointer"
-                  >
-                    View All Services &rarr;
-                  </button>
+            {/* TAB 3: SERVICES */}
+            {currentTab === 'services' && (
+              <div className="space-y-6 animate-in fade-in duration-200">
+                <div>
+                  <h2 className="text-lg font-semibold text-white tracking-tight">
+                    Application Architecture (12 Monitored Microservices)
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Comprehensive telemetry, pod counts, upstream dependencies, and operational health.
+                  </p>
                 </div>
 
                 <ServiceGrid
@@ -261,84 +309,38 @@ export function App() {
                   selectedServiceId={selectedService?.id}
                 />
               </div>
-            </div>
-          )}
+            )}
 
-          {/* TAB 2: INCIDENTS */}
-          {currentTab === 'incidents' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-100">Active & Historical Incidents</h2>
-                  <p className="text-xs text-slate-400">
-                    Search and filter incidents across all 12 microservices.
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleSimulateScenario()}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950 transition cursor-pointer"
-                >
-                  + Simulate New Incident
-                </button>
+            {/* TAB 4: AI INVESTIGATION */}
+            {currentTab === 'investigation' && (
+              <div className="animate-in fade-in duration-200">
+                <AiInvestigationView
+                  incidents={incidents}
+                  services={services}
+                  onSelectIncident={(inc) => setSelectedIncident(inc)}
+                />
               </div>
+            )}
 
-              <IncidentTable
-                incidents={incidents}
-                onSelectIncident={(inc) => setSelectedIncident(inc)}
-                selectedIncidentId={selectedIncident?.id}
-              />
-            </div>
-          )}
-
-          {/* TAB 3: SERVICES */}
-          {currentTab === 'services' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div>
-                <h2 className="text-xl font-bold text-slate-100">
-                  Application Architecture (12 Monitored Microservices)
-                </h2>
-                <p className="text-xs text-slate-400">
-                  Comprehensive telemetry, pod counts, upstream dependencies, and operational health.
-                </p>
+            {/* TAB 5: RECOVERY */}
+            {currentTab === 'recovery' && (
+              <div className="animate-in fade-in duration-200">
+                <RecoveryView
+                  incidents={incidents}
+                  onSelectIncident={(inc) => setSelectedIncident(inc)}
+                  onApproveRemediation={handleApproveRemediation}
+                  onCompleteRecovery={handleCompleteRecovery}
+                />
               </div>
+            )}
 
-              <ServiceGrid
-                services={services}
-                onSelectService={handleSelectService}
-                selectedServiceId={selectedService?.id}
-              />
-            </div>
-          )}
-
-          {/* TAB 4: AI INVESTIGATION */}
-          {currentTab === 'investigation' && (
-            <div className="animate-in fade-in duration-200">
-              <AiInvestigationView
-                incidents={incidents}
-                services={services}
-                onSelectIncident={(inc) => setSelectedIncident(inc)}
-              />
-            </div>
-          )}
-
-          {/* TAB 5: RECOVERY */}
-          {currentTab === 'recovery' && (
-            <div className="animate-in fade-in duration-200">
-              <RecoveryView
-                incidents={incidents}
-                onSelectIncident={(inc) => setSelectedIncident(inc)}
-                onApproveRemediation={handleApproveRemediation}
-                onCompleteRecovery={handleCompleteRecovery}
-              />
-            </div>
-          )}
-
-          {/* TAB 6: REPORTS */}
-          {currentTab === 'reports' && (
-            <div className="animate-in fade-in duration-200">
-              <ReportsView incidents={incidents} />
-            </div>
-          )}
+            {/* TAB 6: REPORTS */}
+            {currentTab === 'reports' && (
+              <div className="animate-in fade-in duration-200">
+                <ReportsView incidents={incidents} />
+              </div>
+            )}
+          </div>
         </main>
       </div>
 
@@ -353,21 +355,24 @@ export function App() {
         />
       )}
 
-      {/* Floating Voice Assistant Trigger */}
+      {/* Floating Apple-Style Voice Assistant Capsule */}
       <button
         type="button"
         onClick={() => setIsVoiceModalOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center space-x-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-purple-700 via-indigo-600 to-rose-600 hover:from-purple-600 hover:to-rose-500 text-white font-semibold text-xs shadow-2xl shadow-purple-950/80 hover:scale-105 active:scale-95 transition-all border border-purple-400/40 cursor-pointer group ring-2 ring-purple-500/20"
+        className="fixed bottom-6 right-6 z-40 flex items-center space-x-2.5 px-4 py-2 rounded-full bg-[#131624]/90 hover:bg-[#1a1f33] backdrop-blur-2xl text-white font-medium text-xs shadow-2xl shadow-indigo-950/80 hover:scale-105 active:scale-95 transition-all border border-indigo-400/30 cursor-pointer group ring-1 ring-white/10"
         title="Open Team Rocket Voice Assistant"
       >
         <div className="relative">
-          <Mic className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-1 -right-1 flex h-2 w-2">
+          <Mic className="w-4 h-4 text-indigo-300 group-hover:scale-110 transition-transform" />
+          <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
           </span>
         </div>
-        <span className="font-mono tracking-wide">Voice AI</span>
+        <span className="font-sans tracking-tight">Voice AI</span>
+        <span className="text-[10px] font-mono px-1 rounded bg-white/[0.08] text-slate-300">
+          ⌘K
+        </span>
       </button>
 
       {/* Voice Assistant Modal */}

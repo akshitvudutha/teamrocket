@@ -3,7 +3,7 @@ import {
   FileText,
   Download,
   BarChart3,
-  CheckCircle,
+  CheckCircle2,
   TrendingDown,
   Clock,
   ShieldCheck,
@@ -61,97 +61,106 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ incidents }) => {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2">
-            <div className="p-2 rounded-xl bg-purple-950 border border-purple-800 text-purple-400">
+      <div className="p-6 rounded-3xl bg-[#131622]/80 backdrop-blur-2xl border border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+        <div className="space-y-1.5">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400">
               <FileText className="w-5 h-5" />
             </div>
-            <h2 className="text-lg font-bold text-slate-100">
-              SRE Incident Reports & Autonomous Analytics
-            </h2>
+            <div>
+              <h2 className="text-base font-semibold text-white tracking-tight">
+                SRE Incident Reports & Autonomous Analytics
+              </h2>
+              <span className="text-[11px] font-mono text-purple-300">
+                Post-Mortem Synthesis & MTTR Benchmarking
+              </span>
+            </div>
           </div>
-          <p className="text-xs text-slate-400">
-            Post-incident analysis, MTTR benchmarking, causal category distribution, and automated post-mortem exports.
+          <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+            Historical incident metrics, mean time to resolution, automated post-mortem synthesis, and JSON export pipelines.
           </p>
         </div>
 
         <button
           onClick={handleExportReport}
-          className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-950/50 transition cursor-pointer"
+          className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium border border-white/[0.12] transition-all cursor-pointer shadow-xs active:scale-95"
         >
-          {downloaded ? <Check className="w-4 h-4 text-emerald-300" /> : <Download className="w-4 h-4" />}
-          <span>{downloaded ? 'Report Downloaded!' : 'Export Post-Mortem (JSON)'}</span>
+          {downloaded ? <Check className="w-4 h-4 text-emerald-400" /> : <Download className="w-4 h-4 text-slate-300" />}
+          <span>{downloaded ? 'Report Exported' : 'Export Post-Mortem (JSON)'}</span>
         </button>
       </div>
 
       {/* SRE KPI Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
-            <span>Mean Time To Resolution (MTTR)</span>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="p-5 rounded-2xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] space-y-2 hover:border-white/[0.14] transition-all">
+          <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono font-medium uppercase tracking-wider">
+            <span>MTTR Benchmark</span>
             <TrendingDown className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-3xl font-black font-mono text-emerald-400">6.4 mins</div>
-          <p className="text-xs text-slate-400">
-            Down from 45 mins (-85%) via AI autonomous triage and runbook synthesis.
+          <div className="text-3xl font-semibold font-mono text-emerald-400 tabular-nums">6.4 mins</div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Reduced from 45 mins (-85%) via automated trace correlation and causal isolation.
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
-            <span>AI Autonomous Resolution Rate</span>
+        <div className="p-5 rounded-2xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] space-y-2 hover:border-white/[0.14] transition-all">
+          <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono font-medium uppercase tracking-wider">
+            <span>Autonomous Resolution</span>
             <Sparkles className="w-4 h-4 text-purple-400" />
           </div>
-          <div className="text-3xl font-black font-mono text-purple-400">94.2%</div>
-          <p className="text-xs text-slate-400">
-            Incidents diagnosed & resolved without requiring manual SRE code hotfixes.
+          <div className="text-3xl font-semibold font-mono text-purple-400 tabular-nums">94.2%</div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Incidents remediated without requiring emergency code hotfixes or schema rollbacks.
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
-            <span>SLA Compliance Index</span>
+        <div className="p-5 rounded-2xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] space-y-2 hover:border-white/[0.14] transition-all">
+          <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono font-medium uppercase tracking-wider">
+            <span>Cluster SLA Compliance</span>
             <ShieldCheck className="w-4 h-4 text-blue-400" />
           </div>
-          <div className="text-3xl font-black font-mono text-blue-400">99.98%</div>
-          <p className="text-xs text-slate-400">
-            Across 12 core e-commerce microservices during high concurrency traffic.
+          <div className="text-3xl font-semibold font-mono text-blue-400 tabular-nums">99.98%</div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Across 12 core e-commerce services during high concurrency peak shopping hours.
           </p>
         </div>
       </div>
 
       {/* Post-Mortem Records Table */}
-      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden">
-        <div className="p-4 border-b border-slate-800 text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">
-          Completed Incident Post-Mortems
+      <div className="rounded-3xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] overflow-hidden shadow-xs">
+        <div className="p-4 border-b border-white/[0.06] text-xs font-semibold text-white uppercase tracking-wider font-mono flex items-center justify-between">
+          <span>Synthesized Post-Mortems</span>
+          <span className="text-[10px] text-slate-400 font-normal">{incidents.length} Documents</span>
         </div>
-        <div className="divide-y divide-slate-800/80">
+        <div className="divide-y divide-white/[0.04]">
           {incidents.map((incident) => (
-            <div key={incident.id} className="p-4.5 space-y-2">
+            <div key={incident.id} className="p-4.5 space-y-2.5 hover:bg-white/[0.02] transition-colors">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center space-x-2">
-                  <span className="font-mono text-xs font-bold text-rose-400 bg-rose-950/40 px-2 py-0.5 rounded border border-rose-800/40">
+                  <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
                     {incident.id}
                   </span>
-                  <span className="text-sm font-bold text-slate-100">{incident.title}</span>
+                  <span className="text-sm font-semibold text-white">{incident.title}</span>
                 </div>
-                <div className="flex items-center space-x-2 font-mono text-xs text-slate-400">
+                <div className="flex items-center space-x-2 font-mono text-[11px] text-slate-400">
                   <span>Detected: {incident.detectedAt}</span>
                   {incident.resolvedAt && (
-                    <span className="text-emerald-400 font-semibold">• Resolved: {incident.resolvedAt}</span>
+                    <span className="text-emerald-400 font-medium">• Resolved: {incident.resolvedAt}</span>
                   )}
                 </div>
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed">
-                <strong className="text-slate-400">Root Cause: </strong>
+                <strong className="text-slate-400 font-medium">Root Cause: </strong>
                 {incident.rootCause.summary}
               </p>
 
-              <div className="text-xs text-slate-400 font-mono bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                <span className="text-purple-300 font-semibold">Remediation Action: </span>
-                {incident.remediation.title} ({incident.remediation.strategy})
+              <div className="text-xs text-slate-400 font-mono bg-black/30 p-2.5 rounded-xl border border-white/[0.04] flex items-center justify-between">
+                <div>
+                  <span className="text-purple-300 font-medium">Remediation: </span>
+                  {incident.remediation.title} ({incident.remediation.strategy})
+                </div>
+                <span className="text-[10px] text-slate-500">Confidence: {incident.rootCause.aiConfidence}%</span>
               </div>
             </div>
           ))}

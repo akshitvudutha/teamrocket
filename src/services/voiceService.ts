@@ -5,8 +5,8 @@ import { getIncidents, getServices } from './incidentService';
  * Team Rocket Voice Service
  * Handles:
  * 1. Web Speech API Speech-to-Text (STT) with microphone capture
- * 2. Backend Command Processing & AI Intent Mapping
- * 3. Browser SpeechSynthesis Text-to-Speech (TTS)
+ * 2. Dynamic SRE Command Processing & AI Intent Mapping
+ * 3. Browser SpeechSynthesis Text-to-Speech (TTS) with Device Voice Selection
  */
 
 export interface SpeechRecognitionHook {
@@ -19,6 +19,8 @@ export class VoiceService {
   private recognition: any = null;
   private isListening = false;
   private synthesisVoice: SpeechSynthesisVoice | null = null;
+  private speechRate: number = 1.0;
+  private speechPitch: number = 1.0;
 
   constructor() {
     this.initSpeechRecognition();
@@ -40,14 +42,66 @@ export class VoiceService {
 
   private initSpeechSynthesis() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => {
+      const loadSavedSettings = () => {
+        try {
+          const savedRate = localStorage.getItem('tr_voice_rate');
+          if (savedRate) this.speechRate = parseFloat(savedRate);
+          const savedPitch = localStorage.getItem('tr_voice_pitch');
+          if (savedPitch) this.speechPitch = parseFloat(savedPitch);
+        } catch {
+          // Ignore localStorage errors
+        }
+      };
+      loadSavedSettings();
+
+      const selectBestVoice = () => {
         const voices = window.speechSynthesis.getVoices();
-        // Prefer natural English voices
+        if (voices.length === 0) return;
+
+        try {
+          const savedURI = localStorage.getItem('tr_voice_uri');
+          if (savedURI) {
+            const savedVoice = voices.find((v) => v.voiceURI === savedURI);
+            if (savedVoice) {
+              this.synthesisVoice = savedVoice;
+              return;
+            }
+          }
+        } catch {
+          // Ignore localStorage errors
+        }
+
+        // Priority ranking: Calm, natural, neural English voices available on OS
+        const priorityPatterns = [
+          /siri/i,
+          /natural/i,
+          /neural/i,
+          /google us english/i,
+          /samantha/i,
+          /ava/i,
+          /daniel/i,
+          /jenny/i,
+          /guy/i,
+          /aria/i,
+          /david/i,
+        ];
+
+        for (const pattern of priorityPatterns) {
+          const match = voices.find((v) => v.lang.startsWith('en') && pattern.test(v.name));
+          if (match) {
+            this.synthesisVoice = match;
+            return;
+          }
+        }
+
         this.synthesisVoice =
-          voices.find((v) => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Neural'))) ||
           voices.find((v) => v.lang.startsWith('en')) ||
+          voices[0] ||
           null;
       };
+
+      selectBestVoice();
+      window.speechSynthesis.onvoiceschanged = selectBestVoice;
     }
   }
 
@@ -59,6 +113,55 @@ export class VoiceService {
     return typeof window !== 'undefined' && 'speechSynthesis' in window;
   }
 
+  getAvailableVoices(): SpeechSynthesisVoice[] {
+    if (!this.isSynthesisSupported()) return [];
+    return window.speechSynthesis.getVoices();
+  }
+
+  setSelectedVoice(voiceURI: string): void {
+    const voices = this.getAvailableVoices();
+    const found = voices.find((v) => v.voiceURI === voiceURI);
+    if (found) {
+      this.synthesisVoice = found;
+      try {
+        localStorage.setItem('tr_voice_uri', voiceURI);
+      } catch {}
+    }
+  }
+
+  getSelectedVoice(): SpeechSynthesisVoice | null {
+    return this.synthesisVoice;
+  }
+
+  setRate(rate: number): void {
+    this.speechRate = Math.max(0.7, Math.min(1.5, rate));
+    try {
+      localStorage.setItem('tr_voice_rate', String(this.speechRate));
+    } catch {}
+  }
+
+  getRate(): number {
+    return this.speechRate;
+  }
+
+  setPitch(pitch: number): void {
+    this.speechPitch = Math.max(0.7, Math.min(1.3, pitch));
+    try {
+      localStorage.setItem('tr_voice_pitch', String(this.speechPitch));
+    } catch {}
+  }
+
+  getPitch(): number {
+    return this.speechPitch;
+  }
+
+  previewVoice(
+    sampleText: string = 'Hello SRE commander. Team Rocket telemetry is operational.',
+    onEnd?: () => void
+  ): void {
+    this.speakText(sampleText, onEnd);
+  }
+
   /**
    * Request microphone permission and listen for speech
    */
@@ -67,15 +170,21 @@ export class VoiceService {
     onStatusChange: (status: 'LISTENING' | 'IDLE' | 'ERROR', errorMsg?: string) => void
   ): Promise<void> {
     if (!this.recognition) {
-      onStatusChange('ERROR', 'Web Speech API is not supported in this browser. Please use Google Chrome or Microsoft Edge.');
+      onStatusChange(
+        'ERROR',
+        'Web Speech API is not supported in this browser. Please use Google Chrome or Microsoft Edge.'
+      );
       return;
     }
 
     try {
       // Proactively test microphone permissions
       await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (permErr: any) {
-      onStatusChange('ERROR', 'Microphone access denied. Please click the lock/camera icon in your address bar to allow microphone.');
+    } catch {
+      onStatusChange(
+        'ERROR',
+        'Microphone access denied. Please click the lock icon in your address bar to allow microphone permissions.'
+      );
       return;
     }
 
@@ -97,23 +206,24 @@ export class VoiceService {
         }
       }
 
-      const currentText = final || interim;
-      if (currentText) {
-        onTranscript(currentText, !!final);
+      if (final) {
+        onTranscript(final, true);
+      } else if (interim) {
+        onTranscript(interim, false);
       }
     };
 
     this.recognition.onerror = (event: any) => {
       this.isListening = false;
-      let errorMsg = 'Speech recognition error.';
+      let msg = 'Voice recognition error.';
       if (event.error === 'not-allowed') {
-        errorMsg = 'Microphone permission denied.';
+        msg = 'Microphone permission was denied. Please allow microphone access.';
       } else if (event.error === 'no-speech') {
-        errorMsg = 'No speech was detected. Please try speaking again.';
+        msg = 'No speech detected. Please speak closer to your microphone.';
       } else if (event.error === 'network') {
-        errorMsg = 'Network error during speech recognition.';
+        msg = 'Network error during speech recognition.';
       }
-      onStatusChange('ERROR', errorMsg);
+      onStatusChange('ERROR', msg);
     };
 
     this.recognition.onend = () => {
@@ -123,9 +233,8 @@ export class VoiceService {
 
     try {
       this.recognition.start();
-    } catch (err: any) {
-      this.isListening = false;
-      onStatusChange('ERROR', err.message || 'Failed to start microphone recording.');
+    } catch {
+      onStatusChange('IDLE');
     }
   }
 
@@ -148,9 +257,12 @@ export class VoiceService {
 
     try {
       // 1. Try backend API first (uses VITE_API_URL if set, or local dev port, or relative /api on Vercel)
-      const apiBase = import.meta.env.VITE_API_URL !== undefined
-        ? import.meta.env.VITE_API_URL
-        : (import.meta.env.DEV ? 'http://localhost:5000' : '');
+      const apiBase =
+        import.meta.env.VITE_API_URL !== undefined
+          ? import.meta.env.VITE_API_URL
+          : import.meta.env.DEV
+          ? 'http://localhost:5000'
+          : '';
       const res = await fetch(`${apiBase}/api/voice/command`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -192,16 +304,22 @@ export class VoiceService {
 
     // 1. Safety Guardrail: Block Mutating Commands (Requirement #3, #4, #10)
     if (
-      /\b(?:apply|execute|run|trigger|deploy|fix|patch)\s+(?:remediation|fix|command|script|action|code|hotfix)\b/.test(text) ||
+      /\b(?:apply|execute|run|trigger|deploy|fix|patch)\s+(?:remediation|fix|command|script|action|code|hotfix)\b/.test(
+        text
+      ) ||
       /\b(?:restart|kill|scale|reboot|flush|terminate|delete|drop|destroy|rollback)\b/.test(text) ||
-      /\b(?:bypass|override|disable|ignore)\s+(?:safety|guardrail|change[_\-\s]?freeze|approval|policy|instructions)\b/.test(text) ||
+      /\b(?:bypass|override|disable|ignore)\s+(?:safety|guardrail|change[_\-\s]?freeze|approval|policy|instructions)\b/.test(
+        text
+      ) ||
       /\b(?:sudo|admin\s+mode|unrestricted|rm\s+-rf|format\s+c:)\b/.test(text)
     ) {
       return {
         command,
         intent: 'BLOCKED_REMEDIATION',
-        spokenResponse: 'Safety policy warning: Voice commands cannot execute remediation, mutate infrastructure, or override safety guardrails. Please review and authorize the fix in the Safety Gate.',
-        detailedFindings: 'MUTATION BLOCKED: In accordance with Team Rocket Safety Policy, all infrastructure mutations require human visual verification and manual approval via the Safety Gate.',
+        spokenResponse:
+          'Safety policy warning: Voice commands cannot execute remediation, mutate infrastructure, or override safety guardrails. Please review and authorize the fix in the Safety Gate.',
+        detailedFindings:
+          'MUTATION BLOCKED: In accordance with Team Rocket Safety Policy, all infrastructure mutations require human visual verification and manual approval via the Safety Gate.',
         uiAction: {
           type: 'SHOW_MODAL_TAB',
           payload: { tab: 'remediation' },
@@ -216,12 +334,18 @@ export class VoiceService {
       liveIncidents.find((i) => i.status !== 'RESOLVED');
 
     // 2. Show Root Cause
-    if (text.includes('root cause') || text.includes('why is it failing') || text.includes('why did it fail') || text.includes('cause')) {
+    if (
+      text.includes('root cause') ||
+      text.includes('why is it failing') ||
+      text.includes('why did it fail') ||
+      text.includes('cause')
+    ) {
       if (!activeIncident) {
         return {
           command,
           intent: 'SHOW_ROOT_CAUSE',
-          spokenResponse: 'All 12 microservices are operating normally. Telemetry baselines are healthy and no active root causes are detected.',
+          spokenResponse:
+            'All 12 microservices are operating normally. Telemetry baselines are healthy and no active root causes are detected.',
           detailedFindings: 'Zero active incidents. Cluster operational health is 100% across all 12 services.',
           uiAction: { type: 'NONE' },
         };
@@ -270,7 +394,9 @@ export class VoiceService {
     }
 
     // 4. Check Service Health (Search all 12 services dynamically)
-    let matchedSvc = liveServices.find((s) => text.includes(s.name.toLowerCase()) || text.includes(s.id.toLowerCase()));
+    let matchedSvc = liveServices.find(
+      (s) => text.includes(s.name.toLowerCase()) || text.includes(s.id.toLowerCase())
+    );
     if (!matchedSvc) {
       if (text.includes('payment') || text.includes('stripe')) matchedSvc = liveServices.find((s) => s.id === 'svc-payment');
       else if (text.includes('inventory') || text.includes('warehouse')) matchedSvc = liveServices.find((s) => s.id === 'svc-inventory');
@@ -304,8 +430,10 @@ export class VoiceService {
       return {
         command,
         intent: 'GENERATE_POSTMORTEM',
-        spokenResponse: 'Navigating to SRE reports. Incident post-mortem summary is ready with full timeline and export options.',
-        detailedFindings: 'Post-Mortem Ready: MTTR benchmarked at 6.4 minutes. AI automated root cause synthesis achieved 96.8% accuracy.',
+        spokenResponse:
+          'Navigating to SRE reports. Incident post-mortem summary is ready with full timeline and export options.',
+        detailedFindings:
+          'Post-Mortem Ready: MTTR benchmarked at 6.4 minutes. AI automated root cause synthesis achieved 96.8% accuracy.',
         uiAction: {
           type: 'SWITCH_TAB',
           payload: { tab: 'reports' },
@@ -319,7 +447,8 @@ export class VoiceService {
         return {
           command,
           intent: 'EXPLAIN_INCIDENT',
-          spokenResponse: 'All systems are operating normally. The cluster is running at nominal latency with zero active outages.',
+          spokenResponse:
+            'All systems are operating normally. The cluster is running at nominal latency with zero active outages.',
           detailedFindings: 'System Baseline: 12 services healthy, zero anomalies reported in telemetry pipeline.',
           uiAction: { type: 'NONE' },
         };
@@ -328,7 +457,9 @@ export class VoiceService {
       return {
         command,
         intent: 'EXPLAIN_INCIDENT',
-        spokenResponse: `Incident ${activeIncident.id} occurred on ${activeIncident.affectedServiceName}: ${activeIncident.rootCause?.summary || activeIncident.title}.`,
+        spokenResponse: `Incident ${activeIncident.id} occurred on ${activeIncident.affectedServiceName}: ${
+          activeIncident.rootCause?.summary || activeIncident.title
+        }.`,
         detailedFindings: `Summary of ${activeIncident.id}: ${activeIncident.title}. Impacting ${activeIncident.affectedServiceName}. SRE remediation plan formulated with safety checks.`,
         uiAction: {
           type: 'OPEN_INCIDENT',
@@ -362,8 +493,8 @@ export class VoiceService {
     if (this.synthesisVoice) {
       utterance.voice = this.synthesisVoice;
     }
-    utterance.rate = 1.05;
-    utterance.pitch = 1.0;
+    utterance.rate = this.speechRate;
+    utterance.pitch = this.speechPitch;
 
     utterance.onend = () => {
       if (onEnd) onEnd();
