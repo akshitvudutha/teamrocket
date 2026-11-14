@@ -2,7 +2,8 @@
 
 An autonomous, prompt-injection-resistant on-call incident response platform with human-in-the-loop safety controls. Built for SRE and DevOps engineers handling high-concurrency cloud microservices.
 
-**GitHub Repository**: [https://github.com/akshitvudutha/teamrocket](https://github.com/akshitvudutha/teamrocket)
+**GitHub Repository**: [https://github.com/akshitvudutha/teamrocket](https://github.com/akshitvudutha/teamrocket)  
+**Live Public Dashboard**: [https://teamrocket-nu.vercel.app/](https://teamrocket-nu.vercel.app/)
 
 ---
 
