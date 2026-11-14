@@ -2,6 +2,8 @@
 
 Welcome to Team Rocket! Follow these simple, numbered steps to get the entire project running on your Windows laptop.
 
+Repository: **https://github.com/akshitvudutha/teamrocket**
+
 ---
 
 ## Step 1: Install the Required Software
@@ -17,6 +19,7 @@ If you don't already have them, download and install these three tools:
 3. **Ollama**:
    - Download from [https://ollama.com/download/windows](https://ollama.com/download/windows).
    - Run the installer. Once installed, Ollama will automatically start in your Windows taskbar.
+   - *(Note: Revanth can skip installing Ollama initially if writing API specs).*
 
 ---
 
@@ -47,10 +50,10 @@ mkdir C:\Projects -ErrorAction SilentlyContinue
 cd C:\Projects
 
 # Clone the repository
-git clone https://github.com/akshitvudutha/team-rocket-dashboard.git
+git clone https://github.com/akshitvudutha/teamrocket.git
 
 # Enter the project directory
-cd team-rocket-dashboard
+cd teamrocket
 ```
 
 ---
@@ -77,7 +80,7 @@ You will need **two separate PowerShell windows** running side-by-side:
 
 ### Window 1: Start the Backend Service
 ```powershell
-cd C:\Projects\team-rocket-dashboard\backend
+cd C:\Projects\teamrocket\backend
 npm run dev
 ```
 You should see:
@@ -89,7 +92,7 @@ You should see:
 
 ### Window 2: Start the Frontend Dashboard
 ```powershell
-cd C:\Projects\team-rocket-dashboard
+cd C:\Projects\teamrocket
 npm run dev
 ```
 You should see:
@@ -115,7 +118,7 @@ You should see the dark-themed **Team Rocket AI Incident Commander** dashboard w
 To make sure everything is working properly on your computer:
 
 ```powershell
-cd C:\Projects\team-rocket-dashboard\backend
+cd C:\Projects\teamrocket\backend
 npm test
 ```
 All 18 tests should pass (`pass 18 | fail 0`).

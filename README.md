@@ -2,6 +2,8 @@
 
 An autonomous, prompt-injection-resistant on-call incident response platform with human-in-the-loop safety controls. Built for SRE and DevOps engineers handling high-concurrency cloud microservices.
 
+**GitHub Repository**: [https://github.com/akshitvudutha/teamrocket](https://github.com/akshitvudutha/teamrocket)
+
 ---
 
 ## 🎯 Problem Statement & Objective
@@ -57,78 +59,112 @@ The system is decoupled into three primary layers:
 ## 🛠️ Technologies Used
 
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Lucide React
-- **Backend**: Node.js (v24), Express, TypeScript, tsx, Node Test Runner
-- **Local AI Engine**: Ollama (`qwen3.5:4b` target, `qwen2.5:7b` active)
-- **Security & Safety**: Custom regex AST threat analyzer, boundary-tag escaper, non-LLM safety invariant gate
+- **Backend**: Node.js (v20+ / v24), Express, TypeScript, tsx, Node Test Runner
+- **Local AI Engine**: Ollama (`qwen3.5:4b` target, `qwen2.5:7b` active local fallback)
+- **Security & Safety**: Regex threat analyzer, boundary-tag escaper, non-LLM safety invariant gate
 
 ---
 
-## 📂 Project Folder Structure
+## 👥 Teammate Onboarding Guide (Beginner-Friendly)
 
-```
-team-rocket-dashboard/
-├── .gitignore                           # Excludes node_modules, dist, logs, env secrets
-├── README.md                            # Main project overview & quickstart
-├── CONTRIBUTING.md                      # Teammate guide for branches & pull requests
-├── TEAM_TASKS.md                        # Task ownership for Akshit, Vikrant, Revanth, Ritesh, Nanda
-├── docs/
-│   ├── ARCHITECTURE.md                  # Deep architectural breakdown
-│   ├── DEVELOPMENT_GUIDE.md             # Windows laptop step-by-step setup
-│   └── GIT_GUIDE.md                     # Beginner Git & GitHub primer
-│
-├── package.json                         # Frontend dependencies & scripts
-├── vite.config.ts                       # Vite bundler config with Tailwind v4
-├── src/                                 # Frontend source
-│   ├── components/                      # Header, Sidebar, ServiceGrid, IncidentTable, etc.
-│   ├── types/                           # UI domain interfaces
-│   └── services/                        # In-memory mock adapter & API connector
-│
-└── backend/                             # Standalone Backend Service
-    ├── package.json                     # Express, tsx, TypeScript
-    ├── tsconfig.json
-    ├── src/
-    │   ├── index.ts                     # Server entry point (port 5000)
-    │   ├── app.ts                       # Express app configuration & routing
-    │   ├── config.ts                    # Env config (Ollama host, target model, port)
-    │   ├── types/                       # Backend domain models (evidence, ollama, safety)
-    │   ├── ollama/                      # Reusable OllamaClient (JSON mode, timeouts, health)
-    │   ├── logs/                        # Evidence normalizer, parsers, and prompt sanitizer
-    │   └── routes/                      # Health & evidence REST endpoints
-    └── tests/
-        ├── phase1-ollama.test.ts        # Phase 1 automated tests (6/6 passing)
-        └── phase2-evidence.test.ts      # Phase 2 automated tests (12/12 passing)
-```
-
----
-
-## ⚡ Quickstart: Running on a New Machine
+Welcome to Team Rocket! Here is everything you need to join and contribute to the project.
 
 ### 1. Prerequisites
-- **Node.js** (v20+ or v24): [Download Node.js](https://nodejs.org/)
-- **Git**: [Download Git](https://git-scm.com/)
-- **Ollama**: [Download Ollama](https://ollama.com/)
+- **Git for Windows**: [Download and install Git](https://git-scm.com/download/win) (click Next with default options).
+- **Node.js**: [Download and install Node.js (LTS version)](https://nodejs.org/).
+- **Ollama** *(Optional for Revanth; Required for Akshit, Vikrant, Ritesh, Nanda)*: [Download Ollama](https://ollama.com/download/windows).
 
-### 2. Pull the Local Model in Ollama
-Open PowerShell and run:
+> [!NOTE]
+> **Special Note for Revanth**: If you are working on the official organizer API documentation, endpoint research, and integration specifications, you can contribute documentation and markdown files immediately without installing Ollama or running the local AI application!
+
+---
+
+### 2. How to Clone the Repository
+Open PowerShell or your terminal on your laptop and run:
 ```powershell
-ollama pull qwen2.5:7b
-# Or target model when available:
-# ollama pull qwen3.5:4b
+# Clone the repository to your machine
+git clone https://github.com/akshitvudutha/teamrocket.git
+
+# Move into the project folder
+cd teamrocket
 ```
 
-### 3. Install Dependencies
+---
+
+### 3. How to Install Dependencies
 ```powershell
-# In project root (frontend)
+# 1. Install frontend packages (in root folder)
 npm install
 
-# In backend folder
+# 2. Install backend packages
 cd backend
 npm install
 cd ..
 ```
 
-### 4. Start the Services
-Run each in a separate terminal:
+---
+
+### 4. How to Open the Project in Antigravity / IDE
+1. Open **Google Antigravity IDE** (or your code editor).
+2. Go to **File** -> **Open Folder...**
+3. Select your cloned `teamrocket` folder.
+4. You are ready to view and edit files!
+
+---
+
+### 5. How to Create Your Personal Branch
+Always work on your own branch so you never overwrite your teammates' code:
+```powershell
+# Make sure you are on main and up to date
+git checkout main
+git pull origin main
+
+# Create and switch to your feature branch
+# Example for Vikrant:
+git checkout -b feature/vikrant-frontend-ui
+
+# Example for Revanth:
+git checkout -b feature/revanth-organizer-api
+
+# Example for Ritesh:
+git checkout -b feature/ritesh-chaos-datasets
+
+# Example for Nanda:
+git checkout -b feature/nanda-metrics-topology
+```
+
+---
+
+### 6. How to Save, Commit, and Push Changes
+When you finish your changes:
+```powershell
+# 1. Check what files you edited
+git status
+
+# 2. Stage your changes
+git add -A
+
+# 3. Commit with a clear message
+git commit -m "docs: add organizer API authentication spec"
+
+# 4. Push to your branch on GitHub
+git push -u origin feature/your-branch-name
+```
+
+---
+
+### 7. How to Create a Pull Request (PR)
+1. Open the repository in your browser: **[https://github.com/akshitvudutha/teamrocket](https://github.com/akshitvudutha/teamrocket)**
+2. You will see a yellow banner: **"Compare & pull request"**. Click it.
+3. Add a short title and 1-2 sentence description of what you did.
+4. Click **"Create pull request"**.
+5. Akshit will review and merge it into `main`!
+
+---
+
+## ⚡ Quickstart: Running the Application Locally
+
+Run each command in a separate terminal:
 
 **Terminal 1 — Backend API (Port 5000):**
 ```powershell
@@ -141,7 +177,7 @@ npm run dev
 npm run dev
 ```
 
-**Terminal 3 — Run Backend Test Suite:**
+**Terminal 3 — Run Backend Test Suite (18 tests):**
 ```powershell
 cd backend
 npm test

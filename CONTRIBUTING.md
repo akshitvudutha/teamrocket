@@ -2,6 +2,8 @@
 
 Welcome to the team! If you are new to Git and GitHub, do not worry—this guide covers everything step by step.
 
+Repository URL: **https://github.com/akshitvudutha/teamrocket**
+
 ---
 
 ## 🧭 Golden Rules for Team Harmony
@@ -11,6 +13,9 @@ Welcome to the team! If you are new to Git and GitHub, do not worry—this guide
 3. **Pull before you push**: Keep your local copy updated with `main`.
 4. **Communicate in chat**: Let teammates know before modifying shared files.
 
+> [!TIP]
+> **For Revanth**: If your tasks involve documenting organizer API requirements, endpoint schemas, and authentication specs, you do NOT need to install Ollama or run the backend. You can write your documentation in Markdown, commit, and open PRs directly!
+
 ---
 
 ## 🚀 Step 1: Getting the Code on Your Laptop
@@ -19,10 +24,10 @@ Open PowerShell or your terminal and run:
 
 ```bash
 # Clone the repository
-git clone https://github.com/akshitvudutha/team-rocket-dashboard.git
+git clone https://github.com/akshitvudutha/teamrocket.git
 
 # Move into the project
-cd team-rocket-dashboard
+cd teamrocket
 
 # Install frontend dependencies
 npm install
@@ -89,7 +94,7 @@ git push -u origin feature/vikrant-frontend-filters
 
 ## 🔀 Step 6: Creating a Pull Request (PR)
 
-1. Open the repository on GitHub: `https://github.com/akshitvudutha/team-rocket-dashboard`
+1. Open the repository on GitHub: `https://github.com/akshitvudutha/teamrocket`
 2. You will see a banner: **"feature/your-branch had recent pushes — Compare & pull request"**.
 3. Click **"Compare & pull request"**.
 4. Add a short summary of what you built.
@@ -104,7 +109,7 @@ git push -u origin feature/vikrant-frontend-filters
 | :--- | :--- | :--- |
 | **Vikrant** | `src/` | Avoid modifying `backend/src/` |
 | **Akshit** | `backend/src/` | Core backend, normalizers, Ollama client |
-| **Revanth** | `backend/src/adapters/` | Organizer API specifications |
+| **Revanth** | `backend/src/adapters/` & `docs/` | Organizer API specifications & docs |
 | **Ritesh** | `backend/tests/` & test data | Synthetic incident test datasets |
 | **Nanda** | `backend/src/analysis/` & docs | Dependency topologies & metric analysis |
 
