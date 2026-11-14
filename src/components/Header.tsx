@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Rocket, ShieldAlert, CheckCircle2, AlertTriangle, Zap, RotateCcw, Clock, Sparkles } from 'lucide-react';
+import { Rocket, ShieldAlert, CheckCircle2, AlertTriangle, Zap, RotateCcw, Clock, Sparkles, Mic } from 'lucide-react';
 import { Incident, ServiceHealth } from '../types';
 import { SIMULATION_SCENARIOS } from '../data/mockData';
 
@@ -8,6 +8,7 @@ interface HeaderProps {
   services: ServiceHealth[];
   onSimulateScenario: (scenarioId?: string) => void;
   onResetAll: () => void;
+  onOpenVoiceAssistant?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   services,
   onSimulateScenario,
   onResetAll,
+  onOpenVoiceAssistant,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [showSimMenu, setShowSimMenu] = useState(false);
@@ -95,6 +97,22 @@ export const Header: React.FC<HeaderProps> = ({
               Rocket-Agent-01 + You
             </span>
           </div>
+
+          {/* Voice Assistant Button */}
+          {onOpenVoiceAssistant && (
+            <button
+              type="button"
+              onClick={onOpenVoiceAssistant}
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-700 via-indigo-600 to-rose-600 hover:from-purple-600 hover:to-rose-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-purple-950/60 transition-all border border-purple-400/30 cursor-pointer active:scale-95 group ring-1 ring-purple-500/20"
+              title="Open Voice Assistant (Microphone commands with speech output)"
+            >
+              <Mic className="w-3.5 h-3.5 group-hover:scale-110 text-purple-200 transition-transform" />
+              <span className="hidden sm:inline">Voice Assistant</span>
+              <span className="px-1.5 py-0.2 text-[9px] bg-purple-950/80 text-purple-300 rounded font-mono border border-purple-700/50">
+                AI
+              </span>
+            </button>
+          )}
 
           {/* Simulation Trigger Controls */}
           <div className="relative">

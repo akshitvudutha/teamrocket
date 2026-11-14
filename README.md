@@ -59,9 +59,30 @@ The system is decoupled into three primary layers:
 ## 🛠️ Technologies Used
 
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Lucide React
+- **Voice Intelligence**: Browser Web Speech API (`webkitSpeechRecognition`), Browser `window.speechSynthesis` (zero API cloud fees), Backend Whisper Fallback route (`/api/voice/transcribe`)
 - **Backend**: Node.js (v20+ / v24), Express, TypeScript, tsx, Node Test Runner
 - **Local AI Engine**: Ollama (`qwen3.5:4b` target, `qwen2.5:7b` active local fallback)
 - **Security & Safety**: Regex threat analyzer, boundary-tag escaper, non-LLM safety invariant gate
+
+---
+
+## 🎙️ AI Voice Assistant & Hands-Free Incident Response
+
+Team Rocket features an on-call AI Voice Assistant designed for emergency operations:
+
+1. **Microphone Access**: Click the **Voice Assistant** button in the top navigation or bottom-right corner.
+2. **Real-Time Speech-to-Text**: Captures and previews spoken commands before executing them.
+3. **Audio Playback**: Reads synthesized SRE findings aloud using browser `SpeechSynthesis`.
+4. **Supported Voice Commands**:
+   - *"Investigate the current incident"* &rarr; Launches investigation and inspects active incident.
+   - *"Show the root cause"* &rarr; Highlights HikariCP pool lock contention and causal evidence.
+   - *"Check payment service health"* &rarr; Reports real-time latency (1840ms), error rates (24.6%), and pod health.
+   - *"Generate a postmortem"* &rarr; Navigates to Reports and prepares timeline with MTTR.
+   - *"Explain the latest incident"* &rarr; Synthesizes executive summary of INC-8092.
+5. **Strict Safety Policy Invariant**:
+   - **Remediation commands spoken via voice are strictly blocked** (e.g. *"Apply remediation and restart"*).
+   - The assistant warns: *"Voice commands cannot execute remediation or mutate infrastructure. Please review and authorize the fix in the Human-in-the-Loop Safety Gate."*
+   - Navigates the operator to the visual approval gate for mandatory human confirmation.
 
 ---
 
@@ -177,7 +198,7 @@ npm run dev
 npm run dev
 ```
 
-**Terminal 3 — Run Backend Test Suite (18 tests):**
+**Terminal 3 — Run Backend Test Suite (25 tests):**
 ```powershell
 cd backend
 npm test
@@ -191,6 +212,7 @@ Open your browser at: **[http://localhost:5173](http://localhost:5173)**
 
 - ✅ **Phase 1: Backend Foundation & Ollama Integration** — Complete (6/6 tests passing)
 - ✅ **Phase 2: Evidence Collection & Log Normalization** — Complete (12/12 tests passing)
+- ✅ **Voice Assistant: Real-Time Audio & SRE Voice Control** — Complete (7/7 tests passing)
 - ⏳ **Phase 3: AI Investigation & Multi-Root-Cause Analysis** — Next
 - ⏳ **Phase 4: Deterministic Safety Engine & Change Freeze** — Queued
 - ⏳ **Phase 5: Official Organizer API Adapter** — Awaiting Organizer Documentation

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Brain,
@@ -21,6 +21,7 @@ import { Incident, Severity } from '../types';
 
 interface IncidentDetailModalProps {
   incident: Incident | null;
+  initialTab?: 'rca' | 'metrics' | 'logs' | 'remediation' | 'recovery';
   onClose: () => void;
   onApproveRemediation: (incidentId: string) => void;
   onCompleteRecovery: (incidentId: string) => void;
@@ -28,14 +29,23 @@ interface IncidentDetailModalProps {
 
 export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
   incident,
+  initialTab,
   onClose,
   onApproveRemediation,
   onCompleteRecovery,
 }) => {
-  const [activeTab, setActiveTab] = useState<'rca' | 'metrics' | 'logs' | 'remediation' | 'recovery'>('rca');
+  const [activeTab, setActiveTab] = useState<'rca' | 'metrics' | 'logs' | 'remediation' | 'recovery'>(
+    initialTab || 'rca'
+  );
   const [logFilter, setLogFilter] = useState<string>('ALL');
   const [logSearch, setLogSearch] = useState<string>('');
   const [copiedSnippet, setCopiedSnippet] = useState(false);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   if (!incident) return null;
 

@@ -108,3 +108,18 @@ export interface IncidentFilter {
   search: string;
   serviceId?: string;
 }
+
+export type VoiceState = 'IDLE' | 'LISTENING' | 'PROCESSING' | 'SPEAKING' | 'ERROR';
+
+export interface VoiceCommandResponse {
+  command: string;
+  intent: 'INVESTIGATE_INCIDENT' | 'SHOW_ROOT_CAUSE' | 'CHECK_SERVICE_HEALTH' | 'GENERATE_POSTMORTEM' | 'EXPLAIN_INCIDENT' | 'BLOCKED_REMEDIATION' | 'UNKNOWN';
+  spokenResponse: string;
+  detailedFindings: string;
+  uiAction: {
+    type: 'OPEN_INCIDENT' | 'SELECT_SERVICE' | 'SWITCH_TAB' | 'SHOW_MODAL_TAB' | 'NONE';
+    payload?: Record<string, unknown>;
+  };
+  safetyProtected?: boolean;
+}
+

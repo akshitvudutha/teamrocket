@@ -8,6 +8,7 @@ import { IncidentDetailModal } from './components/IncidentDetailModal';
 import { AiInvestigationView } from './components/AiInvestigationView';
 import { RecoveryView } from './components/RecoveryView';
 import { ReportsView } from './components/ReportsView';
+import { VoiceAssistantModal } from './components/VoiceAssistantModal';
 import {
   getServices,
   getIncidents,
@@ -16,8 +17,8 @@ import {
   approveRemediation,
   executeRecoveryProgress,
 } from './services/incidentService';
-import { Incident, ServiceHealth } from './types';
-import { Bell, CheckCircle2, ShieldAlert, Sparkles, X } from 'lucide-react';
+import { Incident, ServiceHealth, VoiceCommandResponse } from './types';
+import { Bell, CheckCircle2, ShieldAlert, Sparkles, X, Mic } from 'lucide-react';
 
 export function App() {
   const [services, setServices] = useState<ServiceHealth[]>([]);
@@ -25,6 +26,8 @@ export function App() {
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [selectedService, setSelectedService] = useState<ServiceHealth | null>(null);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
+  const [modalInitialTab, setModalInitialTab] = useState<'rca' | 'metrics' | 'logs' | 'remediation' | 'recovery'>('rca');
   const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'alert' | 'success' | 'info' } | null>(null);
 
   // Load initial data
@@ -104,6 +107,54 @@ export function App() {
     }
   };
 
+  const handleVoiceAction = (action: VoiceCommandResponse['uiAction']) => {
+    if (!action) return;
+
+    switch (action.type) {
+      case 'OPEN_INCIDENT': {
+        const targetId = (action.payload?.incidentId as string) || 'INC-8092';
+        const inc = incidents.find((i) => i.id === targetId) || incidents[0];
+        if (inc) {
+          setSelectedIncident(inc);
+          setModalInitialTab('rca');
+          showToast('Voice Command Executed', `Inspecting incident ${inc.id}`, 'info');
+        }
+        break;
+      }
+      case 'SELECT_SERVICE': {
+        const serviceId = (action.payload?.serviceId as string) || 'svc-payment';
+        const svc = services.find((s) => s.id === serviceId);
+        if (svc) {
+          handleSelectService(svc);
+          setCurrentTab('services');
+          showToast('Service Selected', `Viewing telemetry for ${svc.name}`, 'info');
+        }
+        break;
+      }
+      case 'SWITCH_TAB': {
+        const targetTab = (action.payload?.tab as NavTab) || 'overview';
+        setCurrentTab(targetTab);
+        showToast('Tab Switched', `Navigated to ${targetTab} view`, 'info');
+        break;
+      }
+      case 'SHOW_MODAL_TAB': {
+        const tabName = (action.payload?.tab as 'rca' | 'remediation' | 'recovery' | 'logs' | 'metrics') || 'rca';
+        const targetInc = selectedIncident || activeIncidents[0] || incidents[0];
+        if (targetInc) {
+          setModalInitialTab(tabName);
+          setSelectedIncident(targetInc);
+          if (tabName === 'remediation') {
+            showToast('Safety Gate Active', 'Remediation requires manual on-call authorization.', 'alert');
+          }
+        }
+        break;
+      }
+      case 'NONE':
+      default:
+        break;
+    }
+  };
+
   const activeIncidents = incidents.filter((i) => i.status !== 'RESOLVED');
   const criticalIncidents = activeIncidents.filter((i) => i.severity === 'CRITICAL');
 
@@ -140,6 +191,7 @@ export function App() {
         services={services}
         onSimulateScenario={handleSimulateScenario}
         onResetAll={handleResetAll}
+        onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
       />
 
       {/* Main Layout Body */}
@@ -294,11 +346,38 @@ export function App() {
       {selectedIncident && (
         <IncidentDetailModal
           incident={selectedIncident}
+          initialTab={modalInitialTab}
           onClose={() => setSelectedIncident(null)}
           onApproveRemediation={handleApproveRemediation}
           onCompleteRecovery={handleCompleteRecovery}
         />
       )}
+
+      {/* Floating Voice Assistant Trigger */}
+      <button
+        type="button"
+        onClick={() => setIsVoiceModalOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center space-x-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-purple-700 via-indigo-600 to-rose-600 hover:from-purple-600 hover:to-rose-500 text-white font-semibold text-xs shadow-2xl shadow-purple-950/80 hover:scale-105 active:scale-95 transition-all border border-purple-400/40 cursor-pointer group ring-2 ring-purple-500/20"
+        title="Open Team Rocket Voice Assistant"
+      >
+        <div className="relative">
+          <Mic className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+          <span className="absolute -top-1 -right-1 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+          </span>
+        </div>
+        <span className="font-mono tracking-wide">Voice AI</span>
+      </button>
+
+      {/* Voice Assistant Modal */}
+      <VoiceAssistantModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        onExecuteAction={handleVoiceAction}
+        activeIncidentId={selectedIncident?.id || activeIncidents[0]?.id}
+        selectedServiceId={selectedService?.id}
+      />
     </div>
   );
 }
