@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from './components/Header';
-import { Sidebar, NavTab } from './components/Sidebar';
+import { FloatingNav, NavTab } from './components/FloatingNav';
 import { OverviewStats } from './components/OverviewStats';
 import { ServiceGrid } from './components/ServiceGrid';
 import { IncidentTable } from './components/IncidentTable';
@@ -9,6 +8,7 @@ import { AiInvestigationView } from './components/AiInvestigationView';
 import { RecoveryView } from './components/RecoveryView';
 import { ReportsView } from './components/ReportsView';
 import { VoiceAssistantModal } from './components/VoiceAssistantModal';
+import { ThemeProvider } from './context/ThemeContext';
 import {
   getServices,
   getIncidents,
@@ -18,9 +18,9 @@ import {
   executeRecoveryProgress,
 } from './services/incidentService';
 import { Incident, ServiceHealth, VoiceCommandResponse } from './types';
-import { Bell, CheckCircle2, ShieldAlert, Sparkles, X, Mic } from 'lucide-react';
+import { CheckCircle2, ShieldAlert, Sparkles, X, Mic } from 'lucide-react';
 
-export function App() {
+function DashboardContent() {
   const [services, setServices] = useState<ServiceHealth[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
@@ -36,11 +36,23 @@ export function App() {
     setIncidents(getIncidents());
   }, []);
 
+  // Keyboard shortcut: Cmd+K / Ctrl+K opens Voice Assistant
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsVoiceModalOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const showToast = (title: string, desc: string, type: 'alert' | 'success' | 'info' = 'info') => {
     setToastMessage({ title, desc, type });
     setTimeout(() => {
-      setToastMessage(null), 4500;
-    });
+      setToastMessage(null);
+    }, 4500);
   };
 
   const handleSimulateScenario = (scenarioId?: string) => {
@@ -98,7 +110,6 @@ export function App() {
 
   const handleSelectService = (svc: ServiceHealth) => {
     setSelectedService(svc);
-    // Find active incident for this service if any
     const relatedIncident = incidents.find(
       (i) => i.affectedServiceId === svc.id && i.status !== 'RESOLVED'
     );
@@ -139,7 +150,7 @@ export function App() {
       }
       case 'SHOW_MODAL_TAB': {
         const tabName = (action.payload?.tab as 'rca' | 'remediation' | 'recovery' | 'logs' | 'metrics') || 'rca';
-        const targetInc = selectedIncident || activeIncidents[0] || incidents[0];
+        const targetInc = selectedIncident || incidents.find((i) => i.status !== 'RESOLVED') || incidents[0];
         if (targetInc) {
           setModalInitialTab(tabName);
           setSelectedIncident(targetInc);
@@ -155,196 +166,161 @@ export function App() {
     }
   };
 
-  const activeIncidents = incidents.filter((i) => i.status !== 'RESOLVED');
-  const criticalIncidents = activeIncidents.filter((i) => i.severity === 'CRITICAL');
-
   return (
-    <div className="min-h-screen bg-[#090a0f] text-slate-100 flex flex-col font-sans selection:bg-indigo-500/30 selection:text-indigo-200 antialiased">
-      {/* Apple Dynamic Island / Linear Toast Notification */}
+    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col antialiased selection:bg-indigo-500/20 selection:text-indigo-400">
+      
+      {/* Centered Floating Capsule Navigation */}
+      <FloatingNav
+        currentTab={currentTab}
+        onSelectTab={setCurrentTab}
+        incidents={incidents}
+        services={services}
+        onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
+        onSimulateScenario={handleSimulateScenario}
+        onResetAll={handleResetAll}
+      />
+
+      {/* Main Spacious Content Canvas */}
+      <main className="flex-1 w-full pt-24 sm:pt-28 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          {/* TAB 1: OVERVIEW */}
+          {currentTab === 'overview' && (
+            <div className="animate-in fade-in duration-200">
+              <OverviewStats
+                services={services}
+                incidents={incidents}
+                onSelectIncident={(inc) => setSelectedIncident(inc)}
+                onSimulateScenario={handleSimulateScenario}
+                onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
+                onNavigateTab={(tab) => setCurrentTab(tab)}
+              />
+            </div>
+          )}
+
+          {/* TAB 2: SERVICES */}
+          {currentTab === 'services' && (
+            <div className="animate-in fade-in duration-200 space-y-6">
+              <div className="text-center max-w-xl mx-auto space-y-1.5 pt-4 pb-2">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                  Architecture Topology
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+                  12 Monitored Microservices
+                </h2>
+                <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
+                  Select any service to expand real-time P99 latency, error rates, CPU load, and pod allocation.
+                </p>
+              </div>
+
+              <ServiceGrid
+                services={services}
+                onSelectService={handleSelectService}
+                selectedServiceId={selectedService?.id}
+              />
+            </div>
+          )}
+
+          {/* TAB 3: INCIDENTS */}
+          {currentTab === 'incidents' && (
+            <div className="animate-in fade-in duration-200 space-y-6">
+              <div className="text-center max-w-xl mx-auto space-y-1.5 pt-4 pb-2">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                  Incident Triage Stream
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+                  Active & Historical Incidents
+                </h2>
+                <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
+                  Continuous telemetry anomalies triaged by Team Rocket AI Agent.
+                </p>
+              </div>
+
+              <IncidentTable
+                incidents={incidents}
+                onSelectIncident={(inc) => setSelectedIncident(inc)}
+                selectedIncidentId={selectedIncident?.id}
+              />
+            </div>
+          )}
+
+          {/* TAB 4: AI ASSISTANT / INVESTIGATION */}
+          {currentTab === 'investigation' && (
+            <div className="animate-in fade-in duration-200">
+              <AiInvestigationView
+                incidents={incidents}
+                services={services}
+                onSelectIncident={(inc) => setSelectedIncident(inc)}
+              />
+            </div>
+          )}
+
+          {/* TAB 5: RECOVERY */}
+          {currentTab === 'recovery' && (
+            <div className="animate-in fade-in duration-200">
+              <RecoveryView
+                incidents={incidents}
+                onSelectIncident={(inc) => setSelectedIncident(inc)}
+                onApproveRemediation={handleApproveRemediation}
+                onCompleteRecovery={handleCompleteRecovery}
+              />
+            </div>
+          )}
+
+          {/* TAB 6: REPORTS */}
+          {currentTab === 'reports' && (
+            <div className="animate-in fade-in duration-200">
+              <ReportsView incidents={incidents} />
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Floating Dynamic Island / Notch Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-start space-x-3 p-4 rounded-2xl bg-[#141724]/95 backdrop-blur-2xl border border-white/[0.12] shadow-2xl max-w-md animate-in slide-in-from-bottom-5 duration-300">
-          <div className="p-2 rounded-xl shrink-0">
+        <div className="fixed bottom-6 right-6 z-50 flex items-start space-x-3 p-4 rounded-2xl notch-card max-w-md animate-in slide-in-from-bottom-5 duration-300 shadow-2xl border border-[var(--border-medium)]">
+          <div className="p-1.5 rounded-xl shrink-0">
             {toastMessage.type === 'alert' ? (
-              <ShieldAlert className="w-5 h-5 text-rose-400" />
+              <ShieldAlert className="w-4 h-4 text-rose-500" />
             ) : toastMessage.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             ) : (
-              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <Sparkles className="w-4 h-4 text-indigo-400" />
             )}
           </div>
           <div className="space-y-0.5 flex-1">
-            <h4 className="text-xs font-semibold text-white">{toastMessage.title}</h4>
-            <p className="text-xs text-slate-400 leading-snug">{toastMessage.desc}</p>
+            <h4 className="text-xs font-semibold text-[var(--text-primary)]">{toastMessage.title}</h4>
+            <p className="text-xs text-[var(--text-secondary)] leading-snug">{toastMessage.desc}</p>
           </div>
           <button
             onClick={() => setToastMessage(null)}
-            className="text-slate-400 hover:text-white p-1 cursor-pointer transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 cursor-pointer transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* Global Top Header */}
-      <Header
-        incidents={incidents}
-        services={services}
-        onSimulateScenario={handleSimulateScenario}
-        onResetAll={handleResetAll}
-        onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
-      />
+      {/* Floating Voice Assistant Trigger Pill */}
+      <button
+        type="button"
+        onClick={() => setIsVoiceModalOpen(true)}
+        className="fixed bottom-6 right-6 z-40 notch-pill px-4 py-2 flex items-center space-x-2 text-xs font-medium cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-xl group border border-[var(--border-medium)]"
+        title="Open Team Rocket Voice Assistant (⌘K)"
+      >
+        <div className="relative">
+          <Mic className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
+          <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+          </span>
+        </div>
+        <span className="text-[var(--text-primary)] font-medium">Voice AI</span>
+        <span className="text-[10px] font-mono px-1 rounded bg-[var(--tag-bg)] text-[var(--text-muted)]">
+          ⌘K
+        </span>
+      </button>
 
-      {/* Main Layout Body */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar
-          currentTab={currentTab}
-          onSelectTab={setCurrentTab}
-          activeIncidentCount={activeIncidents.length}
-          criticalIncidentCount={criticalIncidents.length}
-          servicesCount={services.length}
-        />
-
-        {/* View Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
-          <div className="max-w-[1700px] mx-auto space-y-6">
-            {/* TAB 1: OVERVIEW */}
-            {currentTab === 'overview' && (
-              <div className="space-y-7 animate-in fade-in duration-200">
-                {/* Overview Stats Cards */}
-                <OverviewStats services={services} incidents={incidents} />
-
-                {/* Active Incidents Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-semibold text-white tracking-tight">Active Incident Stream</h3>
-                      <p className="text-xs text-slate-400">
-                        Real-time telemetry anomalies triaged by Team Rocket AI Agent.
-                      </p>
-                    </div>
-                    {activeIncidents.length > 0 && (
-                      <span className="text-[10px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                        {activeIncidents.length} Unresolved Incident{activeIncidents.length > 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
-
-                  <IncidentTable
-                    incidents={incidents}
-                    onSelectIncident={(inc) => setSelectedIncident(inc)}
-                    selectedIncidentId={selectedIncident?.id}
-                  />
-                </div>
-
-                {/* 12-Service Health Cards */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-semibold text-white tracking-tight">
-                        E-Commerce Application Cluster (12 Microservices)
-                      </h3>
-                      <p className="text-xs text-slate-400">
-                        Live cluster health, latency (P99), error rates, and CPU utilization.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setCurrentTab('services')}
-                      className="text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer"
-                    >
-                      View All Services &rarr;
-                    </button>
-                  </div>
-
-                  <ServiceGrid
-                    services={services}
-                    onSelectService={handleSelectService}
-                    selectedServiceId={selectedService?.id}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: INCIDENTS */}
-            {currentTab === 'incidents' && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-white tracking-tight">Active & Historical Incidents</h2>
-                    <p className="text-xs text-slate-400">
-                      Search and filter incidents across all 12 microservices.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleSimulateScenario()}
-                    className="px-3.5 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium shadow-xs shadow-rose-950 transition cursor-pointer"
-                  >
-                    + Simulate Chaos Scenario
-                  </button>
-                </div>
-
-                <IncidentTable
-                  incidents={incidents}
-                  onSelectIncident={(inc) => setSelectedIncident(inc)}
-                  selectedIncidentId={selectedIncident?.id}
-                />
-              </div>
-            )}
-
-            {/* TAB 3: SERVICES */}
-            {currentTab === 'services' && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div>
-                  <h2 className="text-lg font-semibold text-white tracking-tight">
-                    Application Architecture (12 Monitored Microservices)
-                  </h2>
-                  <p className="text-xs text-slate-400">
-                    Comprehensive telemetry, pod counts, upstream dependencies, and operational health.
-                  </p>
-                </div>
-
-                <ServiceGrid
-                  services={services}
-                  onSelectService={handleSelectService}
-                  selectedServiceId={selectedService?.id}
-                />
-              </div>
-            )}
-
-            {/* TAB 4: AI INVESTIGATION */}
-            {currentTab === 'investigation' && (
-              <div className="animate-in fade-in duration-200">
-                <AiInvestigationView
-                  incidents={incidents}
-                  services={services}
-                  onSelectIncident={(inc) => setSelectedIncident(inc)}
-                />
-              </div>
-            )}
-
-            {/* TAB 5: RECOVERY */}
-            {currentTab === 'recovery' && (
-              <div className="animate-in fade-in duration-200">
-                <RecoveryView
-                  incidents={incidents}
-                  onSelectIncident={(inc) => setSelectedIncident(inc)}
-                  onApproveRemediation={handleApproveRemediation}
-                  onCompleteRecovery={handleCompleteRecovery}
-                />
-              </div>
-            )}
-
-            {/* TAB 6: REPORTS */}
-            {currentTab === 'reports' && (
-              <div className="animate-in fade-in duration-200">
-                <ReportsView incidents={incidents} />
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-
-      {/* Detailed Incident Modal */}
+      {/* Incident Detail Modal */}
       {selectedIncident && (
         <IncidentDetailModal
           incident={selectedIncident}
@@ -355,35 +331,23 @@ export function App() {
         />
       )}
 
-      {/* Floating Apple-Style Voice Assistant Capsule */}
-      <button
-        type="button"
-        onClick={() => setIsVoiceModalOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center space-x-2.5 px-4 py-2 rounded-full bg-[#131624]/90 hover:bg-[#1a1f33] backdrop-blur-2xl text-white font-medium text-xs shadow-2xl shadow-indigo-950/80 hover:scale-105 active:scale-95 transition-all border border-indigo-400/30 cursor-pointer group ring-1 ring-white/10"
-        title="Open Team Rocket Voice Assistant"
-      >
-        <div className="relative">
-          <Mic className="w-4 h-4 text-indigo-300 group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-          </span>
-        </div>
-        <span className="font-sans tracking-tight">Voice AI</span>
-        <span className="text-[10px] font-mono px-1 rounded bg-white/[0.08] text-slate-300">
-          ⌘K
-        </span>
-      </button>
-
       {/* Voice Assistant Modal */}
       <VoiceAssistantModal
         isOpen={isVoiceModalOpen}
         onClose={() => setIsVoiceModalOpen(false)}
         onExecuteAction={handleVoiceAction}
-        activeIncidentId={selectedIncident?.id || activeIncidents[0]?.id}
+        activeIncidentId={selectedIncident?.id || incidents.find((i) => i.status !== 'RESOLVED')?.id}
         selectedServiceId={selectedService?.id}
       />
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <ThemeProvider>
+      <DashboardContent />
+    </ThemeProvider>
   );
 }
 

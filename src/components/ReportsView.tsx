@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import {
   FileText,
   Download,
-  BarChart3,
   CheckCircle2,
   TrendingDown,
   Clock,
   ShieldCheck,
-  Sparkles,
   Check,
 } from 'lucide-react';
 import { Incident } from '../types';
@@ -24,7 +22,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ incidents }) => {
   const handleExportReport = () => {
     const reportData = {
       team: 'Team Rocket',
-      project: 'AI Autonomous On-Call Incident Response Agent',
+      project: 'AI Autonomous On-Call Incident Response Platform',
       timestamp: new Date().toISOString(),
       summaryStats: {
         totalIncidentsTracked: incidents.length,
@@ -59,113 +57,111 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ incidents }) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="p-6 rounded-3xl bg-[#131622]/80 backdrop-blur-2xl border border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
-        <div className="space-y-1.5">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-white tracking-tight">
-                SRE Incident Reports & Autonomous Analytics
-              </h2>
-              <span className="text-[11px] font-mono text-purple-300">
-                Post-Mortem Synthesis & MTTR Benchmarking
-              </span>
-            </div>
+    <div className="space-y-8 max-w-5xl mx-auto">
+      {/* Reports Header */}
+      <section className="notch-card p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2 max-w-xl">
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="text-xs font-mono uppercase tracking-wider text-indigo-400 font-medium">
+              SRE Postmortems & Analytics
+            </span>
           </div>
-          <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
-            Historical incident metrics, mean time to resolution, automated post-mortem synthesis, and JSON export pipelines.
+
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+            Incident Retrospectives
+          </h2>
+
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+            Automated synthesis of incident timelines, causal root causes, blast radius telemetry, and downloadable JSON postmortems.
           </p>
         </div>
 
         <button
           onClick={handleExportReport}
-          className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium border border-white/[0.12] transition-all cursor-pointer shadow-xs active:scale-95"
+          className="notch-btn-primary px-5 py-2.5 text-xs sm:text-sm shrink-0"
         >
-          {downloaded ? <Check className="w-4 h-4 text-emerald-400" /> : <Download className="w-4 h-4 text-slate-300" />}
-          <span>{downloaded ? 'Report Exported' : 'Export Post-Mortem (JSON)'}</span>
+          {downloaded ? (
+            <>
+              <Check className="w-4 h-4 text-emerald-400" />
+              <span>Export Complete</span>
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4" />
+              <span>Export JSON Postmortem</span>
+            </>
+          )}
         </button>
-      </div>
+      </section>
 
-      {/* SRE KPI Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="p-5 rounded-2xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] space-y-2 hover:border-white/[0.14] transition-all">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono font-medium uppercase tracking-wider">
-            <span>MTTR Benchmark</span>
-            <TrendingDown className="w-4 h-4 text-emerald-400" />
+      {/* SRE Key Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="notch-card p-5 space-y-1">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+            Mean Time To Resolution
+          </span>
+          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-nums">
+            6.4 min
           </div>
-          <div className="text-3xl font-semibold font-mono text-emerald-400 tabular-nums">6.4 mins</div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Reduced from 45 mins (-85%) via automated trace correlation and causal isolation.
-          </p>
+          <p className="text-xs text-emerald-500 font-medium">82% faster than manual triage</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] space-y-2 hover:border-white/[0.14] transition-all">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono font-medium uppercase tracking-wider">
-            <span>Autonomous Resolution</span>
-            <Sparkles className="w-4 h-4 text-purple-400" />
+        <div className="notch-card p-5 space-y-1">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+            AI Diagnosis Precision
+          </span>
+          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-nums">
+            96.8%
           </div>
-          <div className="text-3xl font-semibold font-mono text-purple-400 tabular-nums">94.2%</div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Incidents remediated without requiring emergency code hotfixes or schema rollbacks.
-          </p>
+          <p className="text-xs text-[var(--text-muted)]">Ollama qwen2.5 causal tree accuracy</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] space-y-2 hover:border-white/[0.14] transition-all">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono font-medium uppercase tracking-wider">
-            <span>Cluster SLA Compliance</span>
-            <ShieldCheck className="w-4 h-4 text-blue-400" />
+        <div className="notch-card p-5 space-y-1">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+            Quarterly Cluster SLA
+          </span>
+          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-nums">
+            99.98%
           </div>
-          <div className="text-3xl font-semibold font-mono text-blue-400 tabular-nums">99.98%</div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Across 12 core e-commerce services during high concurrency peak shopping hours.
-          </p>
+          <p className="text-xs text-emerald-500 font-medium">Meets Tier-1 enterprise threshold</p>
         </div>
       </div>
 
-      {/* Post-Mortem Records Table */}
-      <div className="rounded-3xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] overflow-hidden shadow-xs">
-        <div className="p-4 border-b border-white/[0.06] text-xs font-semibold text-white uppercase tracking-wider font-mono flex items-center justify-between">
-          <span>Synthesized Post-Mortems</span>
-          <span className="text-[10px] text-slate-400 font-normal">{incidents.length} Documents</span>
-        </div>
-        <div className="divide-y divide-white/[0.04]">
-          {incidents.map((incident) => (
-            <div key={incident.id} className="p-4.5 space-y-2.5 hover:bg-white/[0.02] transition-colors">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      {/* Historical Incident Reports */}
+      <section className="notch-card p-6 sm:p-7 space-y-4">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+          Synthesized Incident Dossiers
+        </h3>
+
+        <div className="space-y-3">
+          {incidents.map((inc) => (
+            <div
+              key={inc.id}
+              className="p-4 rounded-2xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] space-y-2"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <div className="flex items-center space-x-2">
-                  <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                    {incident.id}
+                  <span className="font-mono text-xs font-semibold text-[var(--text-primary)]">
+                    {inc.id}
                   </span>
-                  <span className="text-sm font-semibold text-white">{incident.title}</span>
+                  <span className="text-xs text-[var(--text-muted)]">· {inc.title}</span>
                 </div>
-                <div className="flex items-center space-x-2 font-mono text-[11px] text-slate-400">
-                  <span>Detected: {incident.detectedAt}</span>
-                  {incident.resolvedAt && (
-                    <span className="text-emerald-400 font-medium">• Resolved: {incident.resolvedAt}</span>
-                  )}
-                </div>
+                <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                  Detected: {new Date(inc.detectedAt).toLocaleDateString()}
+                </span>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed">
-                <strong className="text-slate-400 font-medium">Root Cause: </strong>
-                {incident.rootCause.summary}
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                <strong className="text-[var(--text-primary)]">Root Cause:</strong> {inc.rootCause.summary}
               </p>
-
-              <div className="text-xs text-slate-400 font-mono bg-black/30 p-2.5 rounded-xl border border-white/[0.04] flex items-center justify-between">
-                <div>
-                  <span className="text-purple-300 font-medium">Remediation: </span>
-                  {incident.remediation.title} ({incident.remediation.strategy})
-                </div>
-                <span className="text-[10px] text-slate-500">Confidence: {incident.rootCause.aiConfidence}%</span>
-              </div>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                <strong className="text-[var(--text-primary)]">Runbook Executed:</strong> {inc.remediation.strategy}
+              </p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -2,16 +2,13 @@ import React from 'react';
 import {
   Brain,
   Sparkles,
-  GitBranch,
-  Layers,
-  Network,
-  Cpu,
-  Shield,
   Zap,
   CheckCircle2,
-  Clock,
   ArrowRight,
+  ShieldCheck,
   Workflow,
+  Network,
+  Cpu,
 } from 'lucide-react';
 import { Incident, ServiceHealth } from '../types';
 
@@ -29,192 +26,166 @@ export const AiInvestigationView: React.FC<AiInvestigationViewProps> = ({
   const activeIncident = incidents.find((i) => i.status !== 'RESOLVED') || incidents[0];
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner - Apple Neural Engine Aesthetic */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-indigo-950/30 via-[#131622]/90 to-[#131622]/90 border border-white/[0.08] backdrop-blur-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400">
-              <Brain className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-white tracking-tight">
-                Autonomous Root Cause Analysis & Reasoning
-              </h2>
-              <span className="text-[11px] font-mono text-indigo-300">
-                Multi-Agent Telemetry Ingestion & Causal Synthesis
-              </span>
-            </div>
+    <div className="space-y-8 max-w-5xl mx-auto">
+      {/* Top Banner - Notch Minimalist Copilot Overview */}
+      <section className="notch-card p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2 max-w-xl">
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="text-xs font-mono uppercase tracking-wider text-indigo-400 font-medium">
+              Autonomous Reasoning Engine
+            </span>
           </div>
-          <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
-            Correlates distributed trace spans, parses mixed-format logs, filters adversarial prompt-injection payloads, and synthesizes root-cause hypotheses with verified runbooks.
+
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+            Multi-Agent Root Cause Isolation
+          </h2>
+
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+            Correlates distributed trace spans, parses mixed-format logs, verifies against prompt-injection attacks, and isolates causal anomalies using local Ollama.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-black/40 border border-white/[0.06] text-right font-mono">
-            <div className="text-[10px] text-slate-400 uppercase">Reasoning Engine</div>
-            <div className="text-xs font-semibold text-indigo-300">Ollama qwen2.5:7b (Local)</div>
+        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+          <div className="p-3.5 rounded-2xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] text-left font-mono">
+            <div className="text-[10px] uppercase text-[var(--text-muted)]">Model</div>
+            <div className="text-xs font-semibold text-[var(--text-primary)] mt-0.5">qwen2.5:7b (Ollama)</div>
           </div>
-          <div className="p-3 rounded-2xl bg-black/40 border border-white/[0.06] text-right font-mono">
-            <div className="text-[10px] text-slate-400 uppercase">Diagnosis SLA</div>
-            <div className="text-xs font-semibold text-emerald-400">96.8% Confidence</div>
+          <div className="p-3.5 rounded-2xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] text-left font-mono">
+            <div className="text-[10px] uppercase text-[var(--text-muted)]">Diagnosis Confidence</div>
+            <div className="text-xs font-semibold text-emerald-500 mt-0.5">96.8% Verified</div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Multi-Agent Diagnostic Swarm State */}
-      <div className="space-y-3">
+      {/* 3 Autonomous Diagnostic Agents */}
+      <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
-            Diagnostic Swarm Pipeline
+          <h3 className="text-xs font-mono uppercase tracking-wider text-[var(--text-muted)]">
+            3-Agent Orchestration Swarm
           </h3>
-          <span className="text-[11px] text-slate-400 font-mono">3 Autonomous Agents Active</span>
+          <span className="text-[11px] font-mono text-emerald-500">All Agents Synchronized</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-          <div className="p-4.5 rounded-2xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] space-y-2.5 hover:border-white/[0.14] transition-all">
+          {/* Agent 1 */}
+          <div className="notch-card p-5 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-200 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-400" />
-                1. Telemetry Ingestion Agent
+              <span className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                1. Telemetry Ingest Agent
               </span>
-              <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                ACTIVE
-              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Scans Prometheus metrics and OpenTelemetry trace spans across all 12 services every 1.5 seconds.
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              Ingests 14,200 events/sec across Syslog, Apache Combined, and JSON Lines logs.
             </p>
-            <div className="text-[10px] font-mono text-slate-400 pt-2 border-t border-white/[0.06] flex items-center justify-between">
-              <span>Telemetry Ingress</span>
-              <span className="text-amber-400">P99 Spike (+4,200%)</span>
+            <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[10px] font-mono text-[var(--text-muted)]">
+              <span>Sanitization Rate</span>
+              <span className="text-emerald-500 font-medium">100% Defense</span>
             </div>
           </div>
 
-          <div className="p-4.5 rounded-2xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] space-y-2.5 hover:border-white/[0.14] transition-all">
+          {/* Agent 2 */}
+          <div className="notch-card p-5 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-200 flex items-center gap-2">
-                <GitBranch className="w-4 h-4 text-indigo-400" />
-                2. Causal Tree Synthesizer
+              <span className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                <Brain className="w-3.5 h-3.5 text-indigo-400" />
+                2. Causal Tree Reasoner
               </span>
-              <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                ACTIVE
-              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Builds directed causal graphs of dependency propagation to isolate patient zero from downstream cascades.
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              Traces cross-service dependency graphs to isolate the original fault from cascading errors.
             </p>
-            <div className="text-[10px] font-mono text-slate-400 pt-2 border-t border-white/[0.06] flex items-center justify-between">
-              <span>Topology Depth</span>
-              <span className="text-indigo-400">4 Dependency Hops</span>
+            <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[10px] font-mono text-[var(--text-muted)]">
+              <span>Inference Time</span>
+              <span className="text-indigo-400 font-medium">1.4s (7B Qwen)</span>
             </div>
           </div>
 
-          <div className="p-4.5 rounded-2xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] space-y-2.5 hover:border-white/[0.14] transition-all">
+          {/* Agent 3 */}
+          <div className="notch-card p-5 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-200 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-emerald-400" />
-                3. Safety Verification Agent
+              <span className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                3. Safety Verification Gate
               </span>
-              <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                ACTIVE
-              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Validates non-destructive remediation procedures and submits proposals directly to the Human Safety Gate.
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              Checks remediation runbooks against production safety invariants and requires on-call approval.
             </p>
-            <div className="text-[10px] font-mono text-slate-400 pt-2 border-t border-white/[0.06] flex items-center justify-between">
-              <span>Guardrail Invariant</span>
-              <span className="text-emerald-400">4/4 Checks Passed</span>
+            <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[10px] font-mono text-[var(--text-muted)]">
+              <span>Approval Enforced</span>
+              <span className="text-emerald-500 font-medium">Active Policy</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Active Causal Topology Card */}
+      {/* Active Incident Case File */}
       {activeIncident && (
-        <div className="rounded-3xl bg-[#131622]/80 backdrop-blur-xl border border-white/[0.08] p-6 space-y-5 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                  {activeIncident.id}
-                </span>
-                <span className="text-xs text-slate-400 font-mono">Cascading Failure Topology</span>
-              </div>
-              <h4 className="text-base font-semibold text-white">{activeIncident.title}</h4>
+        <section className="notch-card p-6 sm:p-7 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-4">
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                Active Investigation Dossier
+              </span>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mt-0.5">
+                {activeIncident.id} — {activeIncident.title}
+              </h3>
             </div>
-
             <button
               onClick={() => onSelectIncident(activeIncident)}
-              className="px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white text-xs font-medium border border-white/[0.1] transition-all cursor-pointer shadow-xs"
+              className="notch-btn-primary text-xs px-4 py-2 self-start sm:self-auto"
             >
-              Open Full RCA Workspace &rarr;
+              <span>View Full Investigation & Logs</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Causal Chain Nodes */}
-          <div className="p-4 rounded-2xl bg-black/40 border border-white/[0.06] space-y-3">
-            <div className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider">
-              Root-Cause Propagation Path
+          {/* Root Cause Summary */}
+          <div className="p-4 rounded-2xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                <Brain className="w-4 h-4 text-indigo-400" />
+                Root Cause Synthesis
+              </span>
+              <span className="text-xs font-mono text-emerald-500 font-medium">
+                {activeIncident.rootCause.aiConfidence}% Confidence
+              </span>
             </div>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-3 overflow-x-auto py-2">
-              {activeIncident.rootCause.causalChain.map((node, i) => (
-                <React.Fragment key={node.step}>
-                  <div className="p-3.5 rounded-xl bg-[#161a28] border border-white/[0.08] w-full md:w-56 shrink-0 space-y-1.5 shadow-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-rose-300 font-medium">
-                        Node {node.step}
-                      </span>
-                      <span className="text-[11px] font-medium text-slate-300">
-                        {node.service}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 leading-snug">{node.observation}</p>
-                  </div>
-                  {i < activeIncident.rootCause.causalChain.length - 1 && (
-                    <ArrowRight className="w-4 h-4 text-slate-600 shrink-0 transform md:rotate-0 rotate-90" />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+              {activeIncident.rootCause.summary}
+            </p>
           </div>
 
-          {/* Blast Radius & Timeline */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4.5 rounded-2xl bg-black/30 border border-white/[0.06] space-y-2.5">
-              <span className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider">
-                Impacted Downstream Dependencies
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {activeIncident.rootCause.blastRadiusServices.map((svc, i) => (
-                  <span
-                    key={i}
-                    className="px-2.5 py-1 rounded-lg text-xs font-mono bg-rose-500/10 border border-rose-500/20 text-rose-300"
-                  >
-                    {svc}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-4.5 rounded-2xl bg-black/30 border border-white/[0.06] space-y-2.5">
-              <span className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider">
-                Investigation Timeline
-              </span>
-              <div className="space-y-2 font-mono text-xs">
-                {activeIncident.rootCause.investigationTimeline.map((item, i) => (
-                  <div key={i} className="flex items-center space-x-2.5 text-slate-400">
-                    <Clock className="w-3 h-3 text-slate-500 shrink-0" />
-                    <span className="text-slate-300 text-[11px]">{item.time}:</span>
-                    <span className="text-slate-400 text-[11px] truncate">{item.note}</span>
-                  </div>
-                ))}
-              </div>
+          {/* Causal Chain */}
+          <div className="space-y-2">
+            <span className="text-xs font-mono uppercase tracking-wider text-[var(--text-muted)]">
+              Causal Propagation Path
+            </span>
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+              {activeIncident.rootCause.causalChain && activeIncident.rootCause.causalChain.length > 0 ? (
+                activeIncident.rootCause.causalChain.map((step, idx) => (
+                  <React.Fragment key={step.step}>
+                    <span className="px-3 py-1 rounded-full bg-[var(--tag-bg)] text-[var(--text-primary)] border border-[var(--border-subtle)]">
+                      {step.service}: {step.observation.slice(0, 32)}...
+                    </span>
+                    {idx < activeIncident.rootCause.causalChain.length - 1 && (
+                      <span className="text-[var(--text-muted)]">&rarr;</span>
+                    )}
+                  </React.Fragment>
+                ))
+              ) : (
+                <span className="px-3 py-1 rounded-full bg-[var(--tag-bg)] text-[var(--text-muted)]">
+                  {activeIncident.affectedServiceName}
+                </span>
+              )}
             </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
