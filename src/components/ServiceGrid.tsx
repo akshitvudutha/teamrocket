@@ -14,6 +14,7 @@ import {
   Play,
   RotateCcw,
   Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { ServiceHealth, ServiceStatus } from '../types';
 
@@ -21,12 +22,14 @@ interface ServiceGridProps {
   services: ServiceHealth[];
   onSelectService?: (service: ServiceHealth) => void;
   selectedServiceId?: string | null;
+  onInspectWebsite?: (service: ServiceHealth) => void;
 }
 
 export const ServiceGrid: React.FC<ServiceGridProps> = ({
   services,
   onSelectService,
   selectedServiceId,
+  onInspectWebsite,
 }) => {
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -247,6 +250,18 @@ export const ServiceGrid: React.FC<ServiceGridProps> = ({
                   {/* Upstream / Downstream Dependencies */}
                   <div className="text-[11px] text-[var(--text-muted)] space-y-1">
                     <div className="font-mono text-[10px]">Service Port: 8080 · Cluster Mesh: Envoy</div>
+                  </div>
+
+                  {/* 1-Click to Website Deep Details (Overview, Attributes, Incidents, Logs) */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => onInspectWebsite && onInspectWebsite(svc)}
+                      className="w-full notch-btn-primary py-2 text-xs font-medium flex items-center justify-center gap-1.5 shadow-xs bg-blue-600 hover:bg-blue-500 text-white"
+                    >
+                      <span>Website Details (Overview, Attributes, Incidents, Logs)</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               )}

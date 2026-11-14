@@ -28,6 +28,9 @@ interface FloatingNavProps {
   onOpenVoiceAssistant: () => void;
   onSimulateScenario: (scenarioId?: string) => void;
   onResetAll: () => void;
+  user?: { name: string; email: string } | null;
+  onSignOut?: () => void;
+  onNavigateWelcome?: () => void;
 }
 
 export const FloatingNav: React.FC<FloatingNavProps> = ({
@@ -38,11 +41,15 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
   onOpenVoiceAssistant,
   onSimulateScenario,
   onResetAll,
+  user,
+  onSignOut,
+  onNavigateWelcome,
 }) => {
   const { themeMode, resolvedTheme, setThemeMode } = useTheme();
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const [isChaosMenuOpen, setIsChaosMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   const activeIncidents = incidents.filter((i) => i.status !== 'RESOLVED');
   const criticalCount = activeIncidents.filter((i) => i.severity === 'CRITICAL').length;
@@ -228,6 +235,64 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
                 </>
               )}
             </div>
+
+            {/* User Account / Navigation Control */}
+            {user ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+                  className="notch-btn-ghost p-1.5 sm:px-2.5 sm:py-1.5 flex items-center space-x-1.5 text-xs"
+                  title={`Signed in as ${user.name}`}
+                >
+                  <div className="w-5 h-5 rounded-full bg-blue-600/20 text-blue-400 font-semibold flex items-center justify-center text-[10px]">
+                    {user.name.charAt(0)}
+                  </div>
+                  <span className="hidden lg:inline text-[11px] font-medium truncate max-w-[80px]">
+                    {user.name.split(' ')[0]}
+                  </span>
+                </button>
+
+                {isAccountMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsAccountMenuOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-48 rounded-2xl notch-card p-2 shadow-2xl z-50 text-left border border-[var(--border-subtle)] animate-in fade-in duration-150">
+                      <div className="px-3 py-1.5 border-b border-[var(--border-subtle)] mb-1">
+                        <div className="text-xs font-semibold text-[var(--text-primary)] truncate">{user.name}</div>
+                        <div className="text-[10px] text-[var(--text-muted)] truncate">{user.email}</div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setIsAccountMenuOpen(false);
+                          if (onNavigateWelcome) onNavigateWelcome();
+                        }}
+                        className="w-full text-left px-3 py-1.5 rounded-xl text-xs hover:bg-[var(--tag-bg)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                      >
+                        Landing & Welcome
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAccountMenuOpen(false);
+                          if (onSignOut) onSignOut();
+                        }}
+                        className="w-full text-left px-3 py-1.5 rounded-xl text-xs hover:bg-rose-500/10 text-rose-500 transition-colors cursor-pointer"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onNavigateWelcome}
+                className="notch-btn-ghost text-xs px-2.5 py-1.5"
+                title="Return to Welcome"
+              >
+                Welcome
+              </button>
+            )}
 
             {/* Notch-Style Primary White Action Button: TARSIER Voice */}
             <button

@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { FloatingNav, NavTab } from './components/FloatingNav';
 import { OverviewStats } from './components/OverviewStats';
 import { ServiceGrid } from './components/ServiceGrid';
+import { WebsiteDetailView } from './components/WebsiteDetailView';
 import { IncidentTable } from './components/IncidentTable';
 import { IncidentDetailModal } from './components/IncidentDetailModal';
 import { AiInvestigationView } from './components/AiInvestigationView';
 import { RecoveryView } from './components/RecoveryView';
 import { ReportsView } from './components/ReportsView';
 import { VoiceAssistantModal } from './components/VoiceAssistantModal';
+import { WelcomePage } from './components/WelcomePage';
+import { SignInPage } from './components/SignInPage';
+import { RegisterPage } from './components/RegisterPage';
 import { ThemeProvider } from './context/ThemeContext';
 import {
   getServices,
@@ -20,12 +24,21 @@ import {
 import { Incident, ServiceHealth, VoiceCommandResponse } from './types';
 import { CheckCircle2, ShieldAlert, Sparkles, X, Mic } from 'lucide-react';
 
+export type AppView = 'welcome' | 'signin' | 'register' | 'dashboard';
+
 function DashboardContent() {
+  const [appView, setAppView] = useState<AppView>('welcome');
+  const [user, setUser] = useState<{ name: string; email: string } | null>({
+    name: 'Alex Chen (SRE)',
+    email: 'alex.chen@enterprise.io',
+  });
+
   const [services, setServices] = useState<ServiceHealth[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [selectedService, setSelectedService] = useState<ServiceHealth | null>(null);
+  const [inspectedWebsite, setInspectedWebsite] = useState<ServiceHealth | null>(null);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
   const [modalInitialTab, setModalInitialTab] = useState<'rca' | 'metrics' | 'logs' | 'remediation' | 'recovery'>('rca');
   const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type: 'alert' | 'success' | 'info' } | null>(null);
@@ -73,6 +86,7 @@ function DashboardContent() {
     setIncidents(getIncidents());
     setSelectedIncident(null);
     setSelectedService(null);
+    setInspectedWebsite(null);
     showToast(
       'System State Restored',
       'All 12 microservices returned to 100% operational baseline.',
@@ -166,18 +180,67 @@ function DashboardContent() {
     }
   };
 
+  // 1. ROUTE: Welcome Page
+  if (appView === 'welcome') {
+    return (
+      <WelcomePage
+        onEnterDashboard={() => setAppView('dashboard')}
+        onNavigateSignIn={() => setAppView('signin')}
+        onNavigateRegister={() => setAppView('register')}
+      />
+    );
+  }
+
+  // 2. ROUTE: Sign In Page
+  if (appView === 'signin') {
+    return (
+      <SignInPage
+        onSignInSuccess={() => {
+          setUser({ name: 'Alex Chen (SRE)', email: 'alex.chen@enterprise.io' });
+          setAppView('dashboard');
+        }}
+        onNavigateRegister={() => setAppView('register')}
+        onNavigateWelcome={() => setAppView('welcome')}
+      />
+    );
+  }
+
+  // 3. ROUTE: Register Page
+  if (appView === 'register') {
+    return (
+      <RegisterPage
+        onRegisterSuccess={() => {
+          setUser({ name: 'New SRE Commander', email: 'commander@tarsier.mesh' });
+          setAppView('dashboard');
+        }}
+        onNavigateSignIn={() => setAppView('signin')}
+        onNavigateWelcome={() => setAppView('welcome')}
+      />
+    );
+  }
+
+  // 4. ROUTE: Main Dashboard
   return (
-    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col antialiased selection:bg-indigo-500/20 selection:text-indigo-400">
+    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col antialiased selection:bg-blue-500/20 selection:text-blue-400">
       
       {/* Centered Floating Capsule Navigation */}
       <FloatingNav
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={(tab) => {
+          setCurrentTab(tab);
+          setInspectedWebsite(null);
+        }}
         incidents={incidents}
         services={services}
         onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
         onSimulateScenario={handleSimulateScenario}
         onResetAll={handleResetAll}
+        user={user}
+        onSignOut={() => {
+          setUser(null);
+          setAppView('welcome');
+        }}
+        onNavigateWelcome={() => setAppView('welcome')}
       />
 
       {/* Main Spacious Content Canvas */}
@@ -192,31 +255,48 @@ function DashboardContent() {
                 onSelectIncident={(inc) => setSelectedIncident(inc)}
                 onSimulateScenario={handleSimulateScenario}
                 onOpenVoiceAssistant={() => setIsVoiceModalOpen(true)}
-                onNavigateTab={(tab) => setCurrentTab(tab)}
+                onNavigateTab={(tab) => {
+                  setCurrentTab(tab);
+                  setInspectedWebsite(null);
+                }}
               />
             </div>
           )}
 
-          {/* TAB 2: SERVICES */}
+          {/* TAB 2: SERVICES & WEBSITES */}
           {currentTab === 'services' && (
             <div className="animate-in fade-in duration-200 space-y-6">
-              <div className="text-center max-w-xl mx-auto space-y-1.5 pt-4 pb-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
-                  Architecture Topology
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
-                  12 Monitored Microservices
-                </h2>
-                <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
-                  Select any service to expand real-time P99 latency, error rates, CPU load, and pod allocation.
-                </p>
-              </div>
+              {inspectedWebsite ? (
+                /* 4-Tab Detailed Website Inspector (Overview, Attributes, Incidents, Logs) */
+                <WebsiteDetailView
+                  service={inspectedWebsite}
+                  incidents={incidents}
+                  onSelectIncident={(inc) => setSelectedIncident(inc)}
+                  onBack={() => setInspectedWebsite(null)}
+                />
+              ) : (
+                /* 12-Service Grid with Click to Inspect */
+                <>
+                  <div className="text-center max-w-xl mx-auto space-y-1.5 pt-4 pb-2">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                      Architecture Topology
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+                      12 Monitored Microservices & Websites
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
+                      Select any service to expand real-time telemetry or inspect the full 4-tab Website Specification (Overview, Attributes, Incidents, Logs).
+                    </p>
+                  </div>
 
-              <ServiceGrid
-                services={services}
-                onSelectService={handleSelectService}
-                selectedServiceId={selectedService?.id}
-              />
+                  <ServiceGrid
+                    services={services}
+                    onSelectService={handleSelectService}
+                    selectedServiceId={selectedService?.id}
+                    onInspectWebsite={(svc) => setInspectedWebsite(svc)}
+                  />
+                </>
+              )}
             </div>
           )}
 
@@ -284,7 +364,7 @@ function DashboardContent() {
             ) : toastMessage.type === 'success' ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             ) : (
-              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <Sparkles className="w-4 h-4 text-blue-400" />
             )}
           </div>
           <div className="space-y-0.5 flex-1">
@@ -308,7 +388,7 @@ function DashboardContent() {
         title="Open TARSIER Voice (⌘K)"
       >
         <div className="relative">
-          <Mic className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
+          <Mic className="w-3.5 h-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
           <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
